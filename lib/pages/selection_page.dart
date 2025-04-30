@@ -29,10 +29,10 @@ class _SelectionPageState extends State<SelectionPage> {
 
   // Map to store PDF paths associated with each page
   final Map<String, String> _pagePdfPaths = {
-    'Shrinkage': 'images/pdfs/shrinkage.pdf', // User updated path
-    'Conductor Resistance': 'images/pdfs/conductor_resistance.pdf', // User updated path
-    'Insulation Resistance': 'images/pdfs/insulation_resistance.pdf', // User updated path
-    'Hot Set': 'images/pdfs/hot_set_dumbbell.pdf', // User updated path
+    'Shrinkage': 'images/pdfs/shrinkage.pdf', 
+    'Conductor Resistance': 'images/pdfs/conductor_resistance.pdf', 
+    'Insulation Resistance': 'images/pdfs/insulation_resistance.pdf', 
+    'Hot Set': 'images/pdfs/hot_set_dumbbell.pdf', 
   };
 
   // Map to track the expansion state of each item
