@@ -1,4 +1,7 @@
+import 'package:calculator/pages/ageing_page.dart';
+import 'package:calculator/pages/capacitance_unbalance_page.dart';
 import 'package:calculator/pages/insulation_resistance_page.dart';
+import 'package:calculator/pages/mutual_capacitance_page.dart';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart'; // Import the carousel slider
 
@@ -25,6 +28,10 @@ class _SelectionPageState extends State<SelectionPage> {
     'Conductor Resistance': const ConductorResistancePage(),
     'Insulation Resistance': const InsulationResistancePage(),
     'Hot Set': const HotSetPage(),
+    'Mutual Capacitance': const MutualCapacitancePage(),
+    'Capacitance Unbalance to Earth (Cu)': const CapacitanceUnbalancePage(),
+    'Tensile Strength & Elongation (Ageing)': const AgeingPage(),
+
   };
 
   // Map to store PDF paths associated with each page
@@ -134,7 +141,7 @@ class _SelectionPageState extends State<SelectionPage> {
               title: const Text('About'),
               onTap: () {
                  Navigator.pop(context);
-                 showAboutDialog(context: context, applicationName: 'Keystone App', applicationVersion: '25.04.22');
+                 showAboutDialog(context: context, applicationName: 'Keystone App', applicationVersion: '30.04.22');
               },
             ),
           ],
@@ -427,6 +434,8 @@ class _SelectionPageState extends State<SelectionPage> {
         return 'images/insulation_resistance.png';
       case 'Hot Set':
         return 'images/hot_set.png';
+      case 'Tensile Strength & Elongation (Ageing)':
+        return 'images/ageing.png';
       default:
         return 'images/default_image.png';
     }

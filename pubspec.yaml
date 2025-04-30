@@ -76,6 +76,7 @@ flutter:
     - images/pdfs/hot_set_tubular.pdf
     - images/pdfs/hot_set_dumbbell.pdf
     - images/hot_set.png
+    - images/ageing.png
     
 
   # To add assets to your application, add an assets section, like this:
