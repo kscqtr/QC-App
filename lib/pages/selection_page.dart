@@ -1,15 +1,16 @@
-import 'package:calculator/pages/ageing_page.dart';
-import 'package:calculator/pages/capacitance_unbalance_page.dart';
 import 'package:calculator/pages/insulation_resistance_page.dart';
-import 'package:calculator/pages/mutual_capacitance_page.dart';
 import 'package:flutter/material.dart';
-import 'package:carousel_slider/carousel_slider.dart'; // Import the carousel slider
+import 'package:carousel_slider/carousel_slider.dart';
 
 // Import your page files - ensure these paths are correct
 import 'shrinkage_page.dart';
 import 'conductor_resistance_page.dart';
 import 'hot_set_page.dart';
-import 'calculator_page.dart';
+import 'calculator_page.dart'; // General calculator
+import 'mutual_capacitance_page.dart'; // For drawer
+import 'capacitance_unbalance_page.dart'; // For drawer
+import 'ageing_page.dart'; // For drawer
+
 
 // Import the PDF Viewer Page
 import 'pdf_viewer_page.dart';
@@ -28,18 +29,20 @@ class _SelectionPageState extends State<SelectionPage> {
     'Conductor Resistance': const ConductorResistancePage(),
     'Insulation Resistance': const InsulationResistancePage(),
     'Hot Set': const HotSetPage(),
-    'Mutual Capacitance': const MutualCapacitancePage(),
-    'Capacitance Unbalance to Earth (Cu)': const CapacitanceUnbalancePage(),
-    'Tensile Strength & Elongation (Ageing)': const AgeingPage(),
-
+    'Mutual Capacitance': const MutualCapacitancePage(), // Added from user's import
+    'Capacitance Unbalance to Earth (Cu)': const CapacitanceUnbalancePage(), // Added from user's import
+    'Tensile Strength & Elongation (Ageing)': const AgeingPage(), // Added from user's import
   };
 
   // Map to store PDF paths associated with each page
   final Map<String, String> _pagePdfPaths = {
-    'Shrinkage': 'images/pdfs/shrinkage.pdf', 
-    'Conductor Resistance': 'images/pdfs/conductor_resistance.pdf', 
-    'Insulation Resistance': 'images/pdfs/insulation_resistance.pdf', 
+    'Shrinkage': 'images/pdfs/shrinkage.pdf',
+    'Conductor Resistance': 'images/pdfs/conductor_resistance.pdf',
+    'Insulation Resistance': 'images/pdfs/insulation_resistance.pdf',
     'Hot Set': 'images/pdfs/hot_set_dumbbell.pdf', 
+    'Mutual Capacitance': 'images/pdfs/mutual_capacitance.pdf', 
+    'Capacitance Unbalance to Earth (Cu)': 'images/pdfs/capacitance_unbalance.pdf', 
+    'Tensile Strength & Elongation (Ageing)': 'images/pdfs/ageing.pdf', 
   };
 
   // Map to track the expansion state of each item
@@ -52,8 +55,8 @@ class _SelectionPageState extends State<SelectionPage> {
   int _currentCarouselIndex = 0;
 
   // Define heights for collapsed and expanded states
-  final double _carouselHeightCollapsed = 440.0; // User updated value
-  final double _carouselHeightExpanded = 485.0; // User updated value
+  final double _carouselHeightCollapsed = 440.0;
+  final double _carouselHeightExpanded = 485.0;
 
   @override
   void initState() {
@@ -66,12 +69,9 @@ class _SelectionPageState extends State<SelectionPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Get the list of page keys for easier access by index
     final List<String> pageKeys = _pages.keys.toList();
-    // Determine indicator color based on theme
     final Color indicatorColor = Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black;
 
-    // Calculate target height based on current item's expansion state
     final bool isCurrentItemExpanded = _isExpanded.isNotEmpty && pageKeys.length > _currentCarouselIndex
         ? (_isExpanded[pageKeys[_currentCarouselIndex]] ?? false)
         : false;
@@ -97,7 +97,7 @@ class _SelectionPageState extends State<SelectionPage> {
           ),
         ),
       ),
-      drawer: Drawer( // Drawer content remains the same
+      drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
           children: <Widget>[
@@ -114,6 +114,76 @@ class _SelectionPageState extends State<SelectionPage> {
                 ),
               ),
             ),
+            // --- MODIFIED: Calculator ListTile to ExpansionTile ---
+            ExpansionTile(
+              leading: const Icon(Icons.description_outlined),
+              title: const Text('Tables & Formulas'),
+              children: <Widget>[
+                // Sub-menu for "Math" calculators
+                ExpansionTile(
+                  // Indent the sub-expansion tile
+                  tilePadding: const EdgeInsets.only(left: 32.0, right: 16.0),
+                  leading: const Icon(Icons.flash_on), // Example icon for Math
+                  title: const Text('Electrical Tests'),
+                  children: <Widget>[
+                    ListTile(
+                      // Indent further for specific calculator
+                      contentPadding: const EdgeInsets.only(left: 48.0, right: 16.0),
+                      title: const Text('Conductor Resistance'),
+                      onTap: () {
+                        Navigator.pop(context); // Close drawer
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const CalculatorPage()),
+                        );
+                      },
+                    ),
+                    ListTile(
+                      contentPadding: const EdgeInsets.only(left: 48.0, right: 16.0),
+                      title: const Text('Insulation Resistance'),
+                      onTap: () {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                           const SnackBar(content: Text('Navigate to (Not Implemented)'))
+                        );
+                      },
+                    ),
+                  ],
+                ),
+
+                ExpansionTile(
+                  // Indent the sub-expansion tile
+                  tilePadding: const EdgeInsets.only(left: 32.0, right: 16.0),
+                  leading: const Icon(Icons.flash_off), // Example icon for Math
+                  title: const Text('Non-Electrical Tests'),
+                  children: <Widget>[
+                    ListTile(
+                      // Indent further for specific calculator
+                      contentPadding: const EdgeInsets.only(left: 48.0, right: 16.0),
+                      title: const Text('Tests on Insulation'),
+                      onTap: () {
+                        Navigator.pop(context); // Close drawer
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const CalculatorPage()),
+                        );
+                      },
+                    ),
+                    ListTile(
+                      contentPadding: const EdgeInsets.only(left: 48.0, right: 16.0),
+                      title: const Text('Tests on Sheath'),
+                      onTap: () {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                           const SnackBar(content: Text('Navigate to (Not Implemented)'))
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            // --- End of Modification ---
             ListTile(
               leading: const Icon(Icons.calculate_outlined),
               title: const Text('Calculator'),
@@ -125,23 +195,13 @@ class _SelectionPageState extends State<SelectionPage> {
                 );
               },
             ),
-            ListTile(
-              leading: const Icon(Icons.description_outlined),
-              title: const Text('Formula Sheet'),
-              onTap: () {
-                Navigator.pop(context);
-                 ScaffoldMessenger.of(context).showSnackBar(
-                   const SnackBar(content: Text('Navigate to Formula Sheet (Not Implemented)'))
-                );
-              },
-            ),
             const Divider(),
             ListTile(
               leading: const Icon(Icons.info_outline),
               title: const Text('About'),
               onTap: () {
                  Navigator.pop(context);
-                 showAboutDialog(context: context, applicationName: 'Keystone App', applicationVersion: '30.04.22');
+                 showAboutDialog(context: context, applicationName: 'Keystone App', applicationVersion: '25.05.09'); // User updated version
               },
             ),
           ],
@@ -154,44 +214,35 @@ class _SelectionPageState extends State<SelectionPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
-                  // Company Logo Section
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 20.0),
                     child: Image.asset(
                       _companyLogoPath,
                       height: 80,
                       errorBuilder: (context, error, stackTrace) {
-                        // Log error: Error loading company logo: $error
                         return const Icon(Icons.business, size: 80, color: Colors.grey);
                       },
                     ),
                   ),
-
-
-                  // --- ADDED LayoutBuilder ---
                   LayoutBuilder(
                     builder: (BuildContext context, BoxConstraints constraints) {
-                      // Calculate width based on constraints provided by LayoutBuilder
                       double availableWidth = constraints.maxWidth;
-                      // Apply conditional logic based on availableWidth
                       double containerWidth = availableWidth < 700 ? availableWidth : availableWidth * 0.4;
 
-                      // Return the AnimatedContainer using the calculated width
                       return AnimatedContainer(
                         duration: const Duration(milliseconds: 0),
                         curve: Curves.easeInOut,
                         height: targetCarouselHeight,
-                        width: containerWidth, // Use width from LayoutBuilder
+                        width: containerWidth,
                         child: Center(
                           child: CarouselSlider(
                             options: CarouselOptions(
                               height: targetCarouselHeight,
                               enableInfiniteScroll: false,
-                              // Adjust viewportFraction based on container width? Optional.
                               viewportFraction: containerWidth < 350 ? 0.9 : 0.8,
                               initialPage: 0,
-                              enlargeCenterPage: true, // Keep user's value
-                              enlargeFactor: 0.2,     // Keep user's value
+                              enlargeCenterPage: true,
+                              enlargeFactor: 0.2,
                               onPageChanged: (index, reason) {
                                 setState(() {
                                   if (_isExpanded.containsValue(true)) {
@@ -211,7 +262,7 @@ class _SelectionPageState extends State<SelectionPage> {
                                 pageWidget,
                                 isExpanded,
                                 pdfPath,
-                                () { // Callback to toggle expansion
+                                () {
                                   setState(() {
                                     final newState = !isExpanded;
                                     _isExpanded.updateAll((key, value) => false);
@@ -224,9 +275,7 @@ class _SelectionPageState extends State<SelectionPage> {
                         ),
                       );
                     },
-                  ), // --- End of LayoutBuilder ---
-
-                  // Carousel Indicator Dots Section
+                  ),
                   Padding(
                     padding: const EdgeInsets.only(top: 15.0, bottom: 10.0),
                     child: Row(
@@ -246,14 +295,10 @@ class _SelectionPageState extends State<SelectionPage> {
                       }).toList(),
                     ),
                   ),
-                  // End of Carousel Indicator
-
                 ],
               ),
             ),
           ),
-
-          // Copyright Notice
           Padding(
             padding: const EdgeInsets.only(bottom: 20.0, top: 5.0),
             child: Text(
@@ -264,13 +309,11 @@ class _SelectionPageState extends State<SelectionPage> {
               ),
             ),
           ),
-          // End of Copyright Notice
         ],
       ),
     );
   }
 
-  // Helper method to build each carousel item
   Widget _buildCarouselItem(
     BuildContext context,
     String title,
@@ -284,7 +327,6 @@ class _SelectionPageState extends State<SelectionPage> {
        imagePath,
        fit: BoxFit.cover,
        errorBuilder: (context, error, stackTrace) {
-         // Log error: Error loading image for $title: $error
          return Container(
            color: Colors.grey[300],
            child: Center(
@@ -316,15 +358,13 @@ class _SelectionPageState extends State<SelectionPage> {
              mainAxisSize: MainAxisSize.min,
              mainAxisAlignment: MainAxisAlignment.start,
              children: <Widget>[
-               // Image Section
                SizedBox(
                  height: 275,
                  width: double.infinity,
                  child: image,
                ),
-               // Button to Navigate to the Test Page
                Padding(
-                 padding: const EdgeInsets.only(top: 15.0, left: 30.0, right: 30.0), // User updated padding
+                 padding: const EdgeInsets.only(top: 15.0, left: 30.0, right: 30.0),
                  child: ElevatedButton(
                    style: ElevatedButton.styleFrom(
                      minimumSize: const Size(double.infinity, 45),
@@ -353,8 +393,6 @@ class _SelectionPageState extends State<SelectionPage> {
                    child: Text(title, style: const TextStyle(fontSize: 16)),
                  ),
                ),
-
-               // Expansion Section Toggle
                if (pdfAvailable)
                  TextButton.icon(
                    icon: Icon(
@@ -370,9 +408,7 @@ class _SelectionPageState extends State<SelectionPage> {
                    onPressed: onExpandToggle,
                  )
                else
-                 const SizedBox(height: 48.0),
-
-               // Conditionally Visible PDF Button
+                 const SizedBox(height: 48.0), // Placeholder for consistent height
                Visibility(
                  visible: isCurrentlyExpanded && pdfAvailable,
                  maintainAnimation: true,
@@ -381,13 +417,13 @@ class _SelectionPageState extends State<SelectionPage> {
                     duration: const Duration(milliseconds: 0),
                     opacity: isCurrentlyExpanded ? 1.0 : 0.0,
                     child: Padding(
-                      padding: const EdgeInsets.only(left: 60.0, right: 60.0, bottom: 15.0, top: 5), // User updated padding
+                      padding: const EdgeInsets.only(left: 60.0, right: 60.0, bottom: 15.0, top: 5),
                       child: OutlinedButton.icon(
                         icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
-                        label: const Text("View PDF"), // User updated text
+                        label: const Text("View PDF"),
                         style: OutlinedButton.styleFrom(
                            foregroundColor: Colors.deepPurple,
-                           maximumSize: const Size(double.infinity, 40), // User updated to maximumSize
+                           maximumSize: const Size(double.infinity, 40),
                            shape: RoundedRectangleBorder(
                              borderRadius: BorderRadius.circular(8.0),
                            ),
@@ -414,30 +450,22 @@ class _SelectionPageState extends State<SelectionPage> {
                     ),
                  ),
                ),
-               // End of PDF Button Section
-
-             ], // children of Column
-           ), // Column
-       ), // ClipRRect
-     ); // Container
+             ],
+           ),
+       ),
+     );
   }
 
-
-  // Helper method to get image path based on title
   String _getImagePathForPage(String title) {
     switch (title) {
-      case 'Shrinkage':
-        return 'images/shrinkage.png';
-      case 'Conductor Resistance':
-        return 'images/conductor_resistance.png';
-      case 'Insulation Resistance':
-        return 'images/insulation_resistance.png';
-      case 'Hot Set':
-        return 'images/hot_set.png';
-      case 'Tensile Strength & Elongation (Ageing)':
-        return 'images/ageing.png';
-      default:
-        return 'images/default_image.png';
+      case 'Shrinkage': return 'images/shrinkage.png';
+      case 'Conductor Resistance': return 'images/conductor_resistance.png';
+      case 'Insulation Resistance': return 'images/insulation_resistance.png';
+      case 'Hot Set': return 'images/hot_set.png';
+      case 'Mutual Capacitance': return 'images/mutual_capacitance.png'; // Example
+      case 'Capacitance Unbalance to Earth (Cu)': return 'images/capacitance_unbalance.png'; // Example
+      case 'Tensile Strength & Elongation (Ageing)': return 'images/ageing.png'; // Example
+      default: return 'images/default_image.png';
     }
   }
 }

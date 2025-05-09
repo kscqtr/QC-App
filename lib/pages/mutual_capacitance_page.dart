@@ -18,7 +18,7 @@ class MutualCapacitancePageState extends State<MutualCapacitancePage> {
   // State variables for dropdowns
   String _selectedCapacitanceUnit = 'nF';
   String _selectedInductanceUnit = 'µH';
-  String _selectedResistanceUnit = 'mΩ';
+  String _selectedResistanceUnit = 'Ω';
   String _selectedLengthUnit = 'm';
   String? _selectedCableType;
   String? _selectedCableSize;
@@ -113,7 +113,7 @@ class MutualCapacitancePageState extends State<MutualCapacitancePage> {
     double lengthInKm = (_selectedLengthUnit == 'm') ? lengthInput! / 1000.0 : lengthInput!;
     double capacitanceInNf = (_selectedCapacitanceUnit == 'pF') ? capacitanceInput! / 1000.0 : (_selectedCapacitanceUnit == 'µF' ? capacitanceInput! * 1000.0 : capacitanceInput!);
     double inductanceInMicroH = (_selectedInductanceUnit == 'mH') ? inductanceInput! * 1000.0 : inductanceInput!;
-    double resistanceInOhm = (_selectedResistanceUnit == 'Ω') ? resistanceInput!: (_selectedResistanceUnit == 'mΩ') ? resistanceInput! / 1000.0 : (_selectedResistanceUnit == 'µΩ' ? resistanceInput! / 1000000.0 : resistanceInput!);
+    double resistanceInOhm = (_selectedResistanceUnit == 'Ω') ? resistanceInput!: resistanceInput!;
 
     // Calculations
     double mutualCapacitance = capacitanceInNf / lengthInKm;
@@ -141,7 +141,6 @@ class MutualCapacitancePageState extends State<MutualCapacitancePage> {
       _lengthController.clear();
       _selectedCapacitanceUnit = 'nF';
       _selectedInductanceUnit = 'µH';
-      _selectedResistanceUnit = 'mΩ';
       _selectedLengthUnit = 'm';
       _selectedCableType = null;
       _selectedCableSize = null;
@@ -209,6 +208,46 @@ class MutualCapacitancePageState extends State<MutualCapacitancePage> {
                 );
               }).toList(),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+   // Helper to build input rows
+  Widget _buildInputRowNoDropbox({
+      required String label,
+      required TextEditingController controller,
+      required String selectedUnit,
+      required ValueChanged<String?> onUnitChanged,
+      double fieldWidth = 150,
+      double unitWidth = 80,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: fieldWidth,
+            child: TextField(
+              controller: controller,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              style: const TextStyle(fontSize: 15.0),
+              decoration: InputDecoration(
+                labelText: label,
+                labelStyle: const TextStyle(fontSize: 15.0),
+                border: const OutlineInputBorder(),
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+              ),
+              onChanged: (value) => setState(() => _showResultTab = false),
+            ),
+          ),
+          const SizedBox(width: 10),
+          SizedBox(
+            width: unitWidth,
           ),
         ],
       ),
@@ -285,7 +324,7 @@ class MutualCapacitancePageState extends State<MutualCapacitancePage> {
                 // Input Fields
                 _buildInputRow(label: 'Capacitance (C):', controller: _capacitanceController, selectedUnit: _selectedCapacitanceUnit, unitOptions: const ['nF', 'pF', 'µF'], onUnitChanged: (val) => _selectedCapacitanceUnit = val!),
                 _buildInputRow(label: 'Inductance (L):', controller: _inductanceController, selectedUnit: _selectedInductanceUnit, unitOptions: const ['µH', 'mH'], onUnitChanged: (val) => _selectedInductanceUnit = val!),
-                _buildInputRow(label: 'Resistance (R):', controller: _resistanceController, selectedUnit: _selectedResistanceUnit, unitOptions: const ['µΩ','mΩ','Ω' ], onUnitChanged: (val) => _selectedResistanceUnit = val!),
+                _buildInputRowNoDropbox(label: 'Resistance (R):', controller: _resistanceController, selectedUnit: _selectedResistanceUnit, onUnitChanged: (val) => _selectedResistanceUnit = val!),
                 _buildInputRow(label: 'Length (L):', controller: _lengthController, selectedUnit: _selectedLengthUnit, unitOptions: const ['km', 'm'], onUnitChanged: (val) => _selectedLengthUnit = val!),
 
                 // Dropdowns
@@ -296,10 +335,11 @@ class MutualCapacitancePageState extends State<MutualCapacitancePage> {
 
                 // Action Buttons
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    ElevatedButton.icon(onPressed: _resetFields, icon: const Icon(Icons.refresh), label: const Text('Reset'), style: ElevatedButton.styleFrom(backgroundColor: Colors.grey[400], minimumSize: const Size(120, 45))),
                     ElevatedButton.icon(onPressed: _performCalculations, icon: const Icon(Icons.calculate), label: const Text('Calculate'), style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor, foregroundColor: Theme.of(context).colorScheme.onPrimary, minimumSize: const Size(120, 45))),
+                    const SizedBox(width: 10),
+                    ElevatedButton.icon(onPressed: _resetFields, icon: const Icon(Icons.refresh), label: const Text('Reset'), style: ElevatedButton.styleFrom(backgroundColor: Colors.grey[400], minimumSize: const Size(120, 45))),
                   ],
                 ),
                 const SizedBox(height: 30),
