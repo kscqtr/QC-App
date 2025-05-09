@@ -1,16 +1,11 @@
-# calculator
+# Keystone QC Calculator
 
-A new Flutter project.
+This Flutter application is designed for the Quality Control (QC) department at Keystone Cable (Singapore) Pte Ltd. Its primary purpose is to streamline and assist with various calculations required during cable testing and quality assurance processes.
 
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+The app provides dedicated modules for calculating parameters related to:
+- Shrinkage Test
+- Conductor Resistance Test 
+- Insulation Resistance Test 
+- Hot Set Test 
+- Mutual Capacitance Test 
+- Includes a general-purpose calculator tool.
