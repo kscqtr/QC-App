@@ -39,10 +39,13 @@ class _SelectionPageState extends State<SelectionPage> {
     'Shrinkage': 'images/pdfs/shrinkage.pdf',
     'Conductor Resistance': 'images/pdfs/conductor_resistance.pdf',
     'Insulation Resistance': 'images/pdfs/insulation_resistance.pdf',
+    'Insulation Resistance (Drawer)': 'images/pdfs/insulation_resistance (drawer).pdf',
+    'Tests on Insulation (Drawer)': 'images/pdfs/tests_on_insulation (drawer).pdf',
+    'Tests on Sheath (Drawer)': 'images/pdfs/tests_on_sheath (drawer).pdf',
     'Hot Set': 'images/pdfs/hot_set_dumbbell.pdf', 
     'Mutual Capacitance': 'images/pdfs/mutual_capacitance.pdf', 
     'Capacitance Unbalance to Earth (Cu)': 'images/pdfs/capacitance_unbalance.pdf', 
-    'Tensile Strength & Elongation (Ageing)': 'images/pdfs/ageing.pdf', 
+    'Tensile Strength & Elongation (Ageing)': 'images/pdfs/ageing.pdf',
   };
 
   // Map to track the expansion state of each item
@@ -66,6 +69,26 @@ class _SelectionPageState extends State<SelectionPage> {
       _isExpanded[key] = false;
     }
   }
+
+  void _openPdf(String pageTitle) {
+  final String? pdfPath = _pagePdfPaths[pageTitle];
+  if (pdfPath != null && pdfPath.isNotEmpty) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PdfViewerPage(pdfAssetPath: pdfPath),
+      ),
+    );
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('PDF specification not available for $pageTitle.'),
+        backgroundColor: Colors.orange,
+      ),
+    );
+  }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -129,23 +152,32 @@ class _SelectionPageState extends State<SelectionPage> {
                     ListTile(
                       // Indent further for specific calculator
                       contentPadding: const EdgeInsets.only(left: 48.0, right: 16.0),
-                      title: const Text('Conductor Resistance'),
+                      leading: const Icon(Icons.flash_on),
+                      title: const Text(
+                        'Conductor Resistance',
+                        style: TextStyle(
+                          fontSize: 17.0, // Adjust the font size as needed
+                          fontWeight: FontWeight.normal, // Optional: you can make it bold or change other text styles
+                        ),
+                      ),
                       onTap: () {
                         Navigator.pop(context); // Close drawer
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const CalculatorPage()),
-                        );
+                        _openPdf('Conductor Resistance (Drawer)');
                       },
                     ),
                     ListTile(
                       contentPadding: const EdgeInsets.only(left: 48.0, right: 16.0),
-                      title: const Text('Insulation Resistance'),
+                      leading: const Icon(Icons.flash_on),
+                      title: const Text(
+                        'Insulation Resistance',
+                        style: TextStyle(
+                          fontSize: 17.0, // Adjust the font size as needed
+                          fontWeight: FontWeight.normal, // Optional: you can make it bold or change other text styles
+                        ),
+                      ),
                       onTap: () {
                         Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                           const SnackBar(content: Text('Navigate to (Not Implemented)'))
-                        );
+                        _openPdf('Insulation Resistance (Drawer)');
                       },
                     ),
                   ],
@@ -160,23 +192,32 @@ class _SelectionPageState extends State<SelectionPage> {
                     ListTile(
                       // Indent further for specific calculator
                       contentPadding: const EdgeInsets.only(left: 48.0, right: 16.0),
-                      title: const Text('Tests on Insulation'),
+                      leading: const Icon(Icons.flash_off),
+                      title: const Text(
+                        'Tests on Insulation',
+                        style: TextStyle(
+                          fontSize: 17.0, // Adjust the font size as needed
+                          fontWeight: FontWeight.normal, // Optional: you can make it bold or change other text styles
+                        ),
+                      ),
                       onTap: () {
                         Navigator.pop(context); // Close drawer
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const CalculatorPage()),
-                        );
+                        _openPdf('Tests on Insulation (Drawer)');
                       },
                     ),
                     ListTile(
                       contentPadding: const EdgeInsets.only(left: 48.0, right: 16.0),
-                      title: const Text('Tests on Sheath'),
+                      leading: const Icon(Icons.flash_off),
+                      title: const Text(
+                        'Tests on Sheath',
+                        style: TextStyle(
+                          fontSize: 17.0, // Adjust the font size as needed
+                          fontWeight: FontWeight.normal, // Optional: you can make it bold or change other text styles
+                        ),
+                      ),
                       onTap: () {
                         Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                           const SnackBar(content: Text('Navigate to (Not Implemented)'))
-                        );
+                        _openPdf('Tests on Sheath (Drawer)');
                       },
                     ),
                   ],
