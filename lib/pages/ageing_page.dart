@@ -11,7 +11,7 @@ class AgeingSampleControllers {
   final TextEditingController diameterController; // mm (or Width for Dumbbell)
   final TextEditingController avgThicknessController; // mm
   final TextEditingController forceController;          // N
-  final TextEditingController elongatedController;      // cm
+  final TextEditingController elongatedController;      // Mm
 
   AgeingSampleControllers()
       : diameterController = TextEditingController(),
@@ -217,40 +217,40 @@ class AgeingPageState extends State<AgeingPage> {
       double? diameter = double.tryParse(diameterText);
       double? thickness = double.tryParse(thicknessText);
       double? force = double.tryParse(forceText);
-      double? elongatedCm = double.tryParse(elongatedText);
+      double? elongatedMm = double.tryParse(elongatedText);
       String? errorMsg;
 
       if (diameter == null && diameterText.isNotEmpty) {errorMsg = 'Invalid Diameter (Sample ${i+1}).';}
       else if (thickness == null && thicknessText.isNotEmpty) {errorMsg = 'Invalid Avg. Thickness (Sample ${i+1}).';}
       else if (force == null && forceText.isNotEmpty) {errorMsg = 'Invalid Force (Sample ${i+1}).';}
-      else if (elongatedCm == null && elongatedText.isNotEmpty) {errorMsg = 'Invalid Elongated (Sample ${i+1}).';}
+      else if (elongatedMm == null && elongatedText.isNotEmpty) {errorMsg = 'Invalid Elongated (Sample ${i+1}).';}
       else if (diameterText.isEmpty || thicknessText.isEmpty || forceText.isEmpty || elongatedText.isEmpty) {
         if (tempResults[i] != "SKIPPED") {
             errorMsg = 'All fields required for Sample ${i+1}.';
         }
       }
-      else if (diameter != null && thickness != null && force != null && elongatedCm != null) {
+      else if (diameter != null && thickness != null && force != null && elongatedMm != null) {
         if (diameter <= 0) {errorMsg = 'Diameter must be positive (Sample ${i+1}).';}
         else if (thickness <= 0) {errorMsg = 'Avg. Thickness must be positive (Sample ${i+1}).';}
         else if (thickness >= diameter / 2) {errorMsg = 'Avg. Thickness too large for Sample ${i+1}.';}
         else if (force <= 0) {errorMsg = 'Force must be positive (Sample ${i+1}).';}
-        else if (elongatedCm <= 0) {errorMsg = 'Elongated length must be positive (Sample ${i+1}).';}
-        // Using 20.0 cm as the original length for elongation calculation
-        // else if (elongatedCm < 20.0 && elongatedText.isNotEmpty) { /* Allow negative elongation */ }
+        else if (elongatedMm <= 0) {errorMsg = 'Elongated length must be positive (Sample ${i+1}).';}
+        // Using 20.0 mm as the original length for elongation calculation
+        // else if (elongatedMm < 20.0 && elongatedText.isNotEmpty) { /* Allow negative elongation */ }
       }
 
       if (errorMsg != null) {
         firstErrorMsg ??= errorMsg;
         tempResults[i] = null;
-      } else if (diameter != null && thickness != null && force != null && elongatedCm != null) {
+      } else if (diameter != null && thickness != null && force != null && elongatedMm != null) {
         double area = (diameter - thickness) * thickness * pi;
         if (area <= 0) {
           firstErrorMsg ??= 'Calculated area is invalid for Sample ${i+1}. Check Diameter and Thickness.';
           tempResults[i] = null;
         } else {
           double tensileStrength = force / area;
-          double originalLengthCm = 20.0; // Elongation based on 20mm (2.0cm) marking
-          double elongationPercentage = ((elongatedCm - originalLengthCm) / originalLengthCm) * 100.0;
+          double originalLengthMm = 20.0; // Elongation based on 20mm (2.0cm) marking
+          double elongationPercentage = ((elongatedMm - originalLengthMm) / originalLengthMm) * 100.0;
           tempResults[i] = TubularSampleResults(
             area: '${area.toStringAsFixed(2)} mm²',
             tensileStrength: '${tensileStrength.toStringAsFixed(2)} N/mm²',
@@ -310,31 +310,31 @@ class AgeingPageState extends State<AgeingPage> {
       double? width = double.tryParse(widthText);
       double? thickness = double.tryParse(thicknessText);
       double? force = double.tryParse(forceText);
-      double? elongatedCm = double.tryParse(elongatedText);
+      double? elongatedMm = double.tryParse(elongatedText);
       String? errorMsg;
 
       if (width == null && widthText.isNotEmpty) {errorMsg = 'Invalid Width (Sample ${i+1}).';}
       else if (thickness == null && thicknessText.isNotEmpty) {errorMsg = 'Invalid Avg. Thickness (Sample ${i+1}).';}
       else if (force == null && forceText.isNotEmpty) {errorMsg = 'Invalid Force (Sample ${i+1}).';}
-      else if (elongatedCm == null && elongatedText.isNotEmpty) {errorMsg = 'Invalid Elongated (Sample ${i+1}).';}
+      else if (elongatedMm == null && elongatedText.isNotEmpty) {errorMsg = 'Invalid Elongated (Sample ${i+1}).';}
       else if (widthText.isEmpty || thicknessText.isEmpty || forceText.isEmpty || elongatedText.isEmpty) {
         if (tempResults[i] != "SKIPPED") {
              errorMsg = 'All fields required for Sample ${i+1}.';
         }
       }
-      else if (width != null && thickness != null && force != null && elongatedCm != null) {
+      else if (width != null && thickness != null && force != null && elongatedMm != null) {
         if (width <= 0) {errorMsg = 'Width must be positive (Sample ${i+1}).';}
         else if (thickness <= 0) {errorMsg = 'Avg. Thickness must be positive (Sample ${i+1}).';}
         // Add any specific validation for dumbbell, e.g., thickness vs width if necessary
         // else if (thickness >= width) {errorMsg = 'Avg. Thickness cannot be greater than or equal to Width (Sample ${i+1}).';}
         else if (force <= 0) {errorMsg = 'Force must be positive (Sample ${i+1}).';}
-        else if (elongatedCm <= 0) {errorMsg = 'Elongated length must be positive (Sample ${i+1}).';}
+        else if (elongatedMm <= 0) {errorMsg = 'Elongated length must be positive (Sample ${i+1}).';}
       }
 
       if (errorMsg != null) {
         firstErrorMsg ??= errorMsg;
         tempResults[i] = null;
-      } else if (width != null && thickness != null && force != null && elongatedCm != null) {
+      } else if (width != null && thickness != null && force != null && elongatedMm != null) {
         // Area = Width * Thickness for Dumbbell
         double area = width * thickness;
         if (area <= 0) { // Additional check for calculated area
@@ -342,8 +342,8 @@ class AgeingPageState extends State<AgeingPage> {
             tempResults[i] = null;
         } else {
             double tensileStrength = force / area;
-            double originalLengthCm = 20.0; // Elongation based on 20mm (2.0cm) marking
-            double elongationPercentage = ((elongatedCm - originalLengthCm) / originalLengthCm) * 100.0;
+            double originalLengthMm = 20.0; // Elongation based on 20mm (2.0cm) marking
+            double elongationPercentage = ((elongatedMm - originalLengthMm) / originalLengthMm) * 100.0;
 
             tempResults[i] = DumbbellSampleResults(
                 area: '${area.toStringAsFixed(2)} mm²',
@@ -434,10 +434,15 @@ class AgeingPageState extends State<AgeingPage> {
     String firstFieldLabel = _selectedAgeingType == AgeingTestType.tubular
         ? 'Diameter (mm)'
         : 'Width (mm)';
+    
+    String secondFieldLabel = _selectedAgeingType == AgeingTestType.tubular
+    ? 'Avg. Thick (mm)'
+    : 'Min. Thick (mm)';
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
       elevation: 1.0,
+      color: Color(0xFFFFEBEB),
       child: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Column(
@@ -463,7 +468,7 @@ class AgeingPageState extends State<AgeingPage> {
               children: [
                 _buildTextField(label: firstFieldLabel, controller: controllers.diameterController),
                 const SizedBox(width: 20.0),
-                _buildTextField(label: 'Avg. Thick (mm)', controller: controllers.avgThicknessController),
+                _buildTextField(label: secondFieldLabel, controller: controllers.avgThicknessController),
               ],
             ),
             const SizedBox(height: 10.0),
@@ -472,7 +477,7 @@ class AgeingPageState extends State<AgeingPage> {
               children: [
                 _buildTextField(label: 'Force (N)', controller: controllers.forceController),
                 const SizedBox(width: 20.0),
-                _buildTextField(label: 'Elongated (cm)', controller: controllers.elongatedController),
+                _buildTextField(label: 'Elongated (mm)', controller: controllers.elongatedController),
               ],
             ),
           ],

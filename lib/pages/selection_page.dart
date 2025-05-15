@@ -152,7 +152,7 @@ class _SelectionPageState extends State<SelectionPage> {
                     ListTile(
                       // Indent further for specific calculator
                       contentPadding: const EdgeInsets.only(left: 48.0, right: 16.0),
-                      leading: const Icon(Icons.flash_on),
+                      leading: const Icon(Icons.cable),
                       title: const Text(
                         'Conductor Resistance',
                         style: TextStyle(
@@ -167,7 +167,7 @@ class _SelectionPageState extends State<SelectionPage> {
                     ),
                     ListTile(
                       contentPadding: const EdgeInsets.only(left: 48.0, right: 16.0),
-                      leading: const Icon(Icons.flash_on),
+                      leading: const Icon(Icons.shield),
                       title: const Text(
                         'Insulation Resistance',
                         style: TextStyle(
@@ -192,7 +192,7 @@ class _SelectionPageState extends State<SelectionPage> {
                     ListTile(
                       // Indent further for specific calculator
                       contentPadding: const EdgeInsets.only(left: 48.0, right: 16.0),
-                      leading: const Icon(Icons.flash_off),
+                      leading: const Icon(Icons.search),
                       title: const Text(
                         'Tests on Insulation',
                         style: TextStyle(
@@ -207,7 +207,7 @@ class _SelectionPageState extends State<SelectionPage> {
                     ),
                     ListTile(
                       contentPadding: const EdgeInsets.only(left: 48.0, right: 16.0),
-                      leading: const Icon(Icons.flash_off),
+                      leading: const Icon(Icons.search),
                       title: const Text(
                         'Tests on Sheath',
                         style: TextStyle(

@@ -17,6 +17,7 @@ class MyApp extends StatelessWidget {
         brightness: Brightness.light,
         primarySwatch: Colors.red,
         primaryColor: Colors.red,
+        cardColor: Color(0xFFFFEBEB),
         visualDensity: VisualDensity.adaptivePlatformDensity,
         // Use Google Fonts for a more modern look (if available, otherwise, leave default)
         fontFamily: GoogleFonts.inter().fontFamily,
