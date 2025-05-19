@@ -139,7 +139,7 @@ class ConductorResistancePageState extends State<ConductorResistancePage> {
 
         if (calculatedValue <= crMaxValue) {
           _comparisonText =
-              'Pass. \n\nCalculated CR: ${calculatedValue.toStringAsFixed(decimalnum)} Ω/km. \n\nThe specification maximum is ${crMaxValue.toStringAsFixed(decimalnum)} Ω/km for a $_selectedCableSizeKey cable.';
+              'Pass. \n\nCalculated CR: ${calculatedValue.toStringAsFixed(decimalnum + 1)} Ω/km. \n\nThe specification maximum is ${crMaxValue.toStringAsFixed(decimalnum)} Ω/km for a $_selectedCableSizeKey cable.';
           _comparisonColor = Colors.green;
           _isPass = true;
         } else {
@@ -363,14 +363,14 @@ class ConductorResistancePageState extends State<ConductorResistancePage> {
                                 ? _calculateProduct
                                 : null,
                             icon: const Icon(Icons.calculate),
-                            label: const Text('Calculate CR', style: TextStyle(fontSize: 16.0)),
+                            label: const Text('Calculate CR'),
                             style: ElevatedButton.styleFrom(minimumSize: const Size(150, 45)),
                           ),
                           const SizedBox(width: 10),
                           ElevatedButton.icon(
                             onPressed: _resetFields,
                             icon: const Icon(Icons.refresh),
-                            label: const Text('Reset', style: TextStyle(fontSize: 16.0)),
+                            label: const Text('Reset'),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.grey[500],
                               foregroundColor: Colors.white,

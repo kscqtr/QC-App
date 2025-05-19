@@ -301,13 +301,12 @@ class MutualCapacitancePageState extends State<MutualCapacitancePage> {
   @override
   Widget build(BuildContext context) {
     // Define styles for reuse
-    const boldStyle = TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.black87);
+    const boldStyle = TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87);
     const normalStyle = TextStyle(fontSize: 15, color: Colors.black87);
-    final italicStyle = normalStyle.copyWith(fontStyle: FontStyle.italic);
-    final formulaStyle = italicStyle.copyWith(fontSize: 13, color: Colors.grey[700]);
     final passStyle = boldStyle.copyWith(color: Colors.green.shade800);
     final failStyle = boldStyle.copyWith(color: Colors.red.shade800);
     final errorStyle = boldStyle.copyWith(color: Colors.red, fontSize: 16);
+    final resultValueStyle = normalStyle.copyWith(fontSize: 14);
 
 
     return Scaffold(
@@ -367,10 +366,10 @@ class MutualCapacitancePageState extends State<MutualCapacitancePage> {
                               else ...[
                                 // Capacitance Result Block
                                 const Text('Mutual Capacitance', style: boldStyle),
-                                Text('  Formula: C / L', style: formulaStyle),
-                                Text('  Spec Max (${_selectedCableType ?? ''}): ${_currentCapSpecMax?.toStringAsFixed(1) ?? 'N/A'} nF/km', style: formulaStyle),
+                                Text('  Formula: C / L', style: resultValueStyle),
+                                Text('  Spec Max (${_selectedCableType ?? ''}): ${_currentCapSpecMax?.toStringAsFixed(1) ?? 'N/A'} nF/km', style: resultValueStyle),
+                                Text('  Calculated: ${_calculatedResultCapacitance ?? '...'}', style: resultValueStyle),
                                 const SizedBox(height: 10),
-                                Text('Calculated: ${_calculatedResultCapacitance ?? '...'}', style: boldStyle),
                                 Text(
                                   'Result: ${_isPassCapacitance ? 'Pass' : 'Fail'}',
                                   style: _isPassCapacitance ? passStyle : failStyle,
@@ -379,10 +378,10 @@ class MutualCapacitancePageState extends State<MutualCapacitancePage> {
 
                                 // L/R Result Block
                                 const Text('L/R Ratio', style: boldStyle),
-                                Text('  Formula: L / R', style: formulaStyle),
-                                Text('  Spec Max (${_selectedCableSize ?? ''}): ${_currentLRSpecMax?.toStringAsFixed(1) ?? 'N/A'} ɥH/Ω', style: formulaStyle),
+                                Text('  Formula: L / R', style: resultValueStyle),
+                                Text('  Spec Max (${_selectedCableSize ?? ''}): ${_currentLRSpecMax?.toStringAsFixed(1) ?? 'N/A'} ɥH/Ω', style: resultValueStyle),
+                                Text('  Calculated: ${_calculatedResultLR ?? '...'}', style: resultValueStyle),
                                 const SizedBox(height: 10),
-                                Text('Calculated: ${_calculatedResultLR ?? '...'}', style: boldStyle),
                                 Text(
                                   'Result: ${_isPassLR ? 'Pass' : 'Fail'}',
                                   style: _isPassLR ? passStyle : failStyle,

@@ -1,3 +1,4 @@
+import 'package:calculator/pages/iec60332_3_22_24_page.dart';
 import 'package:calculator/pages/insulation_resistance_page.dart';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
@@ -29,9 +30,10 @@ class _SelectionPageState extends State<SelectionPage> {
     'Conductor Resistance': const ConductorResistancePage(),
     'Insulation Resistance': const InsulationResistancePage(),
     'Hot Set': const HotSetPage(),
-    'Mutual Capacitance': const MutualCapacitancePage(), // Added from user's import
-    'Capacitance Unbalance to Earth (Cu)': const CapacitanceUnbalancePage(), // Added from user's import
-    'Tensile Strength & Elongation (Ageing)': const AgeingPage(), // Added from user's import
+    'Mutual Capacitance': const MutualCapacitancePage(), 
+    'Capacitance Unbalance to Earth (Cu)': const CapacitanceUnbalancePage(), 
+    'Tensile Strength & Elongation (Ageing)': const AgeingPage(), 
+    'IEC 60332-3-22/24': const IEC60332Page(),
   };
 
   // Map to store PDF paths associated with each page

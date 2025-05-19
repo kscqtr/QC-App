@@ -29,7 +29,7 @@ class _HotSetWeightSelectionPageState extends State<HotSetWeightSelectionPage> {
     },
     {
       'title': 'Dumbbell',
-      'imagePath': 'images/hot_set_dumbbell.jpg',
+      'imagePath': 'images/hot_set_dumbbell.png',
       'pageBuilder': () => const DumbbellWeightPage(),
     },
   ];
