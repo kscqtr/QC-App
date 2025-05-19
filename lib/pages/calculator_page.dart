@@ -65,7 +65,7 @@ class _CalculatorPageState extends State<CalculatorPage> {
       if (_operand.isEmpty) {
         _output = _currentInput.isEmpty ? "0" : _currentInput;
       } else {
-        _output = _formatOutput(_num1) + " " + _operand + (_currentInput.isEmpty ? "" : (" " + _currentInput));
+        _output = "${_formatOutput(_num1)} $_operand${_currentInput.isEmpty ? "" : (" $_currentInput")}";
       }
     } else if (_operand.isNotEmpty) { // _currentInput is empty, but there's an operator (e.g. "123 + ")
       _operand = "";
@@ -100,7 +100,7 @@ class _CalculatorPageState extends State<CalculatorPage> {
     if (_operand.isEmpty) {
       _output = _currentInput;
     } else {
-      _output = _formatOutput(_num1) + " " + _operand + " " + _currentInput;
+      _output = "${_formatOutput(_num1)} $_operand $_currentInput";
     }
   }
 
@@ -121,7 +121,7 @@ class _CalculatorPageState extends State<CalculatorPage> {
     if (_operand.isEmpty) {
       _output = _currentInput;
     } else {
-      _output = _formatOutput(_num1) + " " + _operand + " " + _currentInput;
+      _output = "${_formatOutput(_num1)} $_operand $_currentInput";
     }
   }
 
@@ -169,7 +169,7 @@ class _CalculatorPageState extends State<CalculatorPage> {
 
 
     _operand = op;
-    _output = _formatOutput(_num1) + " " + _operand;
+    _output = "${_formatOutput(_num1)} $_operand";
     _currentInput = ""; // Ready for the second number
     _operatorJustPressed = true;
   }
@@ -253,7 +253,7 @@ class _CalculatorPageState extends State<CalculatorPage> {
             // Try to recover from error if _num1 is valid by negating it
             _num1 *= -1;
             _currentInput = _formatOutput(_num1);
-            _output = _operand.isEmpty ? _currentInput : _formatOutput(_num1) + " " + _operand;
+            _output = _operand.isEmpty ? _currentInput : "${_formatOutput(_num1)} $_operand";
             _operatorJustPressed = _operand.isNotEmpty;
             return;
          }
@@ -296,12 +296,12 @@ class _CalculatorPageState extends State<CalculatorPage> {
         tempResultString = _formatOutput(valToOperateOn);
         if (operateOnNum1) {
             _num1 = valToOperateOn; // Update _num1 if it was the target
-            _output = _formatOutput(_num1) + " " + _operand;
+            _output = "${_formatOutput(_num1)} $_operand";
             _currentInput = ""; // Keep _currentInput empty as we are waiting for num2
             _operatorJustPressed = true; // Operator is still active
         } else {
             _currentInput = tempResultString;
-            _output = _operand.isEmpty ? _currentInput : _formatOutput(_num1) + " " + _operand + " " + _currentInput;
+            _output = _operand.isEmpty ? _currentInput : "${_formatOutput(_num1)} $_operand $_currentInput";
             _operatorJustPressed = false;
         }
         break;
@@ -314,7 +314,7 @@ class _CalculatorPageState extends State<CalculatorPage> {
         }
         valToOperateOn /= 100;
         _currentInput = _formatOutput(valToOperateOn);
-        _output = _operand.isEmpty ? _currentInput : _formatOutput(_num1) + " " + _operand + " " + _currentInput;
+        _output = _operand.isEmpty ? _currentInput : "${_formatOutput(_num1)} $_operand $_currentInput";
         _operatorJustPressed = false;
         break;
       case "x²":
@@ -322,12 +322,12 @@ class _CalculatorPageState extends State<CalculatorPage> {
         tempResultString = _formatOutput(valToOperateOn);
          if (operateOnNum1) {
             _num1 = valToOperateOn;
-            _output = _formatOutput(_num1) + " " + _operand;
+            _output = "${_formatOutput(_num1)} $_operand";
             _currentInput = "";
             _operatorJustPressed = true;
         } else {
             _currentInput = tempResultString;
-            _output = _operand.isEmpty ? _currentInput : _formatOutput(_num1) + " " + _operand + " " + _currentInput;
+            _output = _operand.isEmpty ? _currentInput : "${_formatOutput(_num1)} $_operand $_currentInput";
             _operatorJustPressed = false;
         }
         break;
@@ -341,12 +341,12 @@ class _CalculatorPageState extends State<CalculatorPage> {
           tempResultString = _formatOutput(valToOperateOn);
           if (operateOnNum1) {
             _num1 = valToOperateOn;
-            _output = _formatOutput(_num1) + " " + _operand;
+            _output = "${_formatOutput(_num1)} $_operand";
             _currentInput = "";
             _operatorJustPressed = true;
           } else {
             _currentInput = tempResultString;
-             _output = _operand.isEmpty ? _currentInput : _formatOutput(_num1) + " " + _operand + " " + _currentInput;
+             _output = _operand.isEmpty ? _currentInput : "${_formatOutput(_num1)} $_operand $_currentInput";
             _operatorJustPressed = false;
           }
         }
