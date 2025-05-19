@@ -10,7 +10,7 @@ class AgeingSampleControllers {
   // For Dumbbell, diameterController will represent 'Width'
   final TextEditingController diameterController; // mm (or Width for Dumbbell)
   final TextEditingController avgThicknessController; // mm
-  final TextEditingController forceController;          // N
+  final TextEditingController forceController;      // N
   final TextEditingController elongatedController;      // Mm
 
   AgeingSampleControllers()
@@ -85,6 +85,11 @@ class AgeingPageState extends State<AgeingPage> {
   final int _maxSamples = 6;
   final ScrollController _scrollController = ScrollController(); // Scroll controller for auto-scroll
 
+  // New state variable for original length selection
+  double _selectedOriginalLength = 20.0; // Default to 20mm
+  final List<double> _originalLengthOptions = [10.0, 20.0];
+
+
   @override
   void initState() {
     super.initState();
@@ -94,11 +99,12 @@ class AgeingPageState extends State<AgeingPage> {
   void _initializeSamplesAndResults() {
     // Dispose existing controllers if any, before re-initializing
     for (var controllers in _sampleControllers) {
-        controllers.dispose();
+      controllers.dispose();
     }
     _sampleControllers = [AgeingSampleControllers()];
     _calculatedResults =
         List.filled(_sampleControllers.length, null, growable: true);
+    _selectedOriginalLength = 20.0; // Reset to default on init
   }
 
   @override
@@ -119,16 +125,30 @@ class AgeingPageState extends State<AgeingPage> {
     }
   }
 
+  // New method for handling original length dropdown changes
+  void _onOriginalLengthChanged(double? newLength) {
+    if (newLength != null && newLength != _selectedOriginalLength) {
+      setState(() {
+        _selectedOriginalLength = newLength;
+        _showResultTab = false; // Hide results when input changes
+        _calculationError = null; // Clear error when input changes
+      });
+    }
+  }
+
+
  void _scrollToBottom() {
     // Ensure the scroll controller has clients and the widget is built.
     if (_scrollController.hasClients) {
       // Using addPostFrameCallback to ensure the scroll happens after the layout pass
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
+        if (_scrollController.hasClients) { // Check again inside callback
+            _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+            );
+        }
       });
     }
   }
@@ -165,10 +185,7 @@ class AgeingPageState extends State<AgeingPage> {
         if (!hasAnyValidResult && _calculationError == null) {
             _showResultTab = false;
         } else {
-            // If there was an error related to this specific sample, it might need more complex logic to clear.
-            // For now, a general check. If no results and no general error, hide.
-            // If an error remains, it will be shown.
-             _showResultTab = _calculatedResults.any((r) => r != null) || _calculationError != null;
+            _showResultTab = _calculatedResults.any((r) => r != null) || _calculationError != null;
         }
         if (!_showResultTab) _calculationError = null;
       });
@@ -235,8 +252,8 @@ class AgeingPageState extends State<AgeingPage> {
         else if (thickness >= diameter / 2) {errorMsg = 'Avg. Thickness too large for Sample ${i+1}.';}
         else if (force <= 0) {errorMsg = 'Force must be positive (Sample ${i+1}).';}
         else if (elongatedMm <= 0) {errorMsg = 'Elongated length must be positive (Sample ${i+1}).';}
-        // Using 20.0 mm as the original length for elongation calculation
-        // else if (elongatedMm < 20.0 && elongatedText.isNotEmpty) { /* Allow negative elongation */ }
+        // Using _selectedOriginalLength for elongation calculation
+        // else if (elongatedMm < _selectedOriginalLength && elongatedText.isNotEmpty) { /* Allow negative elongation */ }
       }
 
       if (errorMsg != null) {
@@ -249,7 +266,8 @@ class AgeingPageState extends State<AgeingPage> {
           tempResults[i] = null;
         } else {
           double tensileStrength = force / area;
-          double originalLengthMm = 20.0; // Elongation based on 20mm (2.0cm) marking
+          // Use _selectedOriginalLength from state
+          double originalLengthMm = _selectedOriginalLength; 
           double elongationPercentage = ((elongatedMm - originalLengthMm) / originalLengthMm) * 100.0;
           tempResults[i] = TubularSampleResults(
             area: '${area.toStringAsFixed(2)} mm²',
@@ -325,8 +343,6 @@ class AgeingPageState extends State<AgeingPage> {
       else if (width != null && thickness != null && force != null && elongatedMm != null) {
         if (width <= 0) {errorMsg = 'Width must be positive (Sample ${i+1}).';}
         else if (thickness <= 0) {errorMsg = 'Avg. Thickness must be positive (Sample ${i+1}).';}
-        // Add any specific validation for dumbbell, e.g., thickness vs width if necessary
-        // else if (thickness >= width) {errorMsg = 'Avg. Thickness cannot be greater than or equal to Width (Sample ${i+1}).';}
         else if (force <= 0) {errorMsg = 'Force must be positive (Sample ${i+1}).';}
         else if (elongatedMm <= 0) {errorMsg = 'Elongated length must be positive (Sample ${i+1}).';}
       }
@@ -342,7 +358,8 @@ class AgeingPageState extends State<AgeingPage> {
             tempResults[i] = null;
         } else {
             double tensileStrength = force / area;
-            double originalLengthMm = 20.0; // Elongation based on 20mm (2.0cm) marking
+            // Use _selectedOriginalLength from state
+            double originalLengthMm = _selectedOriginalLength; 
             double elongationPercentage = ((elongatedMm - originalLengthMm) / originalLengthMm) * 100.0;
 
             tempResults[i] = DumbbellSampleResults(
@@ -380,25 +397,20 @@ class AgeingPageState extends State<AgeingPage> {
     });
   }
 
-  void _resetFields({bool resetType = true}) { // Added optional param
+  void _resetFields({bool resetType = true}) { 
     FocusScope.of(context).unfocus();
     setState(() {
-      // Removed: _selectedAgeingType = AgeingTestType.tubular;
-      // This allows the reset button to clear fields for the current type
-      // and _onTestTypeChanged to set the type before resetting fields.
-      // If resetType is true (e.g. from a global reset button not tied to type change),
-      // then we might want to reset the type. For now, type is preserved on reset.
-      // If you want the "Reset" button to also reset the type to tubular, add:
-      // if (resetType) _selectedAgeingType = AgeingTestType.tubular;
-
       for (var controllers in _sampleControllers) {
         controllers.dispose();
       }
-      // Re-initialize to one sample
       _sampleControllers = [AgeingSampleControllers()];
       _calculatedResults = List.filled(_sampleControllers.length, null, growable: true);
       _calculationError = null;
       _showResultTab = false;
+      _selectedOriginalLength = 20.0; // Reset original length to default
+      if (resetType) { // Only reset type if explicitly told to
+        _selectedAgeingType = AgeingTestType.tubular; // Reset type to default
+      }
     });
   }
 
@@ -432,17 +444,17 @@ class AgeingPageState extends State<AgeingPage> {
   Widget _buildSampleInputCard(int index) {
     final controllers = _sampleControllers[index];
     String firstFieldLabel = _selectedAgeingType == AgeingTestType.tubular
-        ? 'Diameter (mm)'
-        : 'Width (mm)';
+        ? 'D, Diameter (mm)'
+        : 'W, Width (mm)';
     
     String secondFieldLabel = _selectedAgeingType == AgeingTestType.tubular
-    ? 'Avg. Thick (mm)'
-    : 'Min. Thick (mm)';
+    ? 'T, Avg. Thick (mm)'
+    : 'T, Min. Thick (mm)';
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
       elevation: 1.0,
-      color: Color(0xFFFFEBEB),
+      color: const Color(0xFFFFEBEB), // Light pinkish background for card
       child: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Column(
@@ -475,9 +487,9 @@ class AgeingPageState extends State<AgeingPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _buildTextField(label: 'Force (N)', controller: controllers.forceController),
+                _buildTextField(label: 'F, Force (N)', controller: controllers.forceController),
                 const SizedBox(width: 20.0),
-                _buildTextField(label: 'Elongated (mm)', controller: controllers.elongatedController),
+                _buildTextField(label: 'E, Elongated (mm)', controller: controllers.elongatedController),
               ],
             ),
           ],
@@ -493,7 +505,7 @@ class AgeingPageState extends State<AgeingPage> {
     final errorStyle = boldStyle.copyWith(color: Colors.red.shade700, fontSize: 16);
     // final resultLabelStyle = normalStyle.copyWith(fontSize: 14, fontWeight: FontWeight.w500);
     final resultValueStyle = normalStyle.copyWith(fontSize: 14);
-    final noteStyle = TextStyle(fontSize: 13, color: Colors.grey.shade700, fontStyle: FontStyle.italic);
+    // final noteStyle = TextStyle(fontSize: 13, color: Colors.grey.shade700, fontStyle: FontStyle.italic);
 
 
     return Scaffold(
@@ -505,7 +517,7 @@ class AgeingPageState extends State<AgeingPage> {
           child: Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center, // Center the note text
+              crossAxisAlignment: CrossAxisAlignment.center, 
               children: [
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 10.0),
@@ -525,16 +537,26 @@ class AgeingPageState extends State<AgeingPage> {
                     onChanged: _onTestTypeChanged,
                   ),
                 ),
-                // Added Note Text Widget
+                // New Dropdown for Original Length
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 12.0, top: 4.0), // Add some padding
-                  child: Text(
-                    'Note: Elongation based on 20mm marking',
-                    style: noteStyle,
-                    textAlign: TextAlign.center,
+                  padding: const EdgeInsets.symmetric(vertical: 10.0),
+                  child: DropdownButtonFormField<double>(
+                    decoration: const InputDecoration(
+                      labelText: 'Select Original Length for Elongation',
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                    ),
+                    value: _selectedOriginalLength,
+                    items: _originalLengthOptions.map((double length) {
+                      return DropdownMenuItem<double>(
+                        value: length,
+                        child: Text('${length.toInt()} mm'),
+                      );
+                    }).toList(),
+                    onChanged: _onOriginalLengthChanged,
                   ),
                 ),
-                // Input fields section - now common for both types
+                
                 ListView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -558,7 +580,7 @@ class AgeingPageState extends State<AgeingPage> {
                             minimumSize: const Size(110, 45))),
                     const SizedBox(width: 8),
                     ElevatedButton.icon(
-                        onPressed: () => _resetFields(resetType: true), // Pass true if reset button should also reset type to default
+                        onPressed: () => _resetFields(resetType: true), 
                         icon: const Icon(Icons.refresh),
                         label: const Text('Reset'),
                         style: ElevatedButton.styleFrom(
@@ -640,14 +662,14 @@ class AgeingPageState extends State<AgeingPage> {
                                               child: Column(
                                                 crossAxisAlignment: CrossAxisAlignment.start,
                                                 children: [
-                                                  Text('Area: ${result.area}', style: resultValueStyle),
-                                                  Text('Tensile Strength: ${result.tensileStrength}', style: resultValueStyle),
-                                                  Text('Elongation: ${result.elongation}', style: resultValueStyle),
+                                                  Text('Area: (D - T) * T * ${pi.toStringAsFixed(4)} = ${result.area}', style: resultValueStyle), // Display Pi value used
+                                                  Text('Tensile Strength: F/A = ${result.tensileStrength}', style: resultValueStyle),
+                                                  Text('Elongation: [(E - $_selectedOriginalLength)/$_selectedOriginalLength] * 100% = ${result.elongation}', style: resultValueStyle), // Show selected original length
                                                 ],
                                               ),
                                             ),
                                             if (index < _calculatedResults.length -1 && _calculatedResults.skip(index+1).any((r) => r != null && r != "SKIPPED"))
-                                              const Divider(height: 10, thickness: 0.5),
+                                               const Divider(height: 10, thickness: 0.5),
                                           ],
                                         ),
                                       );
@@ -664,14 +686,14 @@ class AgeingPageState extends State<AgeingPage> {
                                               child: Column(
                                                 crossAxisAlignment: CrossAxisAlignment.start,
                                                 children: [
-                                                  Text('Area: ${result.area}', style: resultValueStyle),
-                                                  Text('Tensile Strength: ${result.tensileStrength}', style: resultValueStyle),
-                                                  Text('Elongation: ${result.elongation}', style: resultValueStyle),
+                                                  Text('Area: W * T = ${result.area}', style: resultValueStyle), // Clarified formula
+                                                  Text('Tensile Strength: F/A = ${result.tensileStrength}', style: resultValueStyle),
+                                                  Text('Elongation: [(E - $_selectedOriginalLength)/$_selectedOriginalLength] * 100% = ${result.elongation}', style: resultValueStyle), // Show selected original length
                                                 ],
                                               ),
                                             ),
                                            if (index < _calculatedResults.length -1 && _calculatedResults.skip(index+1).any((r) => r != null && r != "SKIPPED"))
-                                              const Divider(height: 10, thickness: 0.5),
+                                               const Divider(height: 10, thickness: 0.5),
                                           ],
                                         ),
                                       );
@@ -694,3 +716,4 @@ class AgeingPageState extends State<AgeingPage> {
     );
   }
 }
+

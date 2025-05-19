@@ -286,7 +286,7 @@ class AmbientTemperaturePageState extends State<AmbientTemperaturePage> {
                         children: [
                           ElevatedButton.icon(
                             icon: const Icon(Icons.calculate),
-                            label: const Text('Calculate IR', style: TextStyle(fontSize: 16.0)),
+                            label: const Text('Calculate IR'),
                             onPressed: (_input1Controller.text.isNotEmpty &&
                                        _input2Controller.text.isNotEmpty &&
                                        _selectedMaterial != null &&
@@ -298,7 +298,7 @@ class AmbientTemperaturePageState extends State<AmbientTemperaturePage> {
                           const SizedBox(width: 10),
                           ElevatedButton.icon(
                             icon: const Icon(Icons.refresh),
-                            label: const Text('Reset', style: TextStyle(fontSize: 16.0)),
+                            label: const Text('Reset'),
                             onPressed: _resetFields,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.grey[500],
@@ -329,7 +329,7 @@ class AmbientTemperaturePageState extends State<AmbientTemperaturePage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('Calculation:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blueGrey)),
+                              const Text('Calculation:'),
                               const SizedBox(height: 10),
                               Text('R = ${_input2Controller.text} $_selectedRUnit', style: const TextStyle(fontSize: 15)),
                               Text('L = ${_input1Controller.text} $_selectedLengthUnit', style: const TextStyle(fontSize: 15)),

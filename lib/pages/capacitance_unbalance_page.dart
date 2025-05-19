@@ -228,11 +228,10 @@ class CapacitanceUnbalancePageState extends State<CapacitanceUnbalancePage> {
     // Define styles for reuse
     const boldStyle = TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87);
     const normalStyle = TextStyle(fontSize: 15, color: Colors.black87);
-    final italicStyle = normalStyle.copyWith(fontStyle: FontStyle.italic);
-    final formulaStyle = italicStyle.copyWith(fontSize: 14, color: Colors.grey[700]);
     final passStyle = boldStyle.copyWith(color: Colors.green.shade800);
     final failStyle = boldStyle.copyWith(color: Colors.red.shade800);
     final errorStyle = boldStyle.copyWith(color: Colors.red, fontSize: 16);
+    final resultValueStyle = normalStyle.copyWith(fontSize: 14);
 
 
     return Scaffold(
@@ -248,7 +247,7 @@ class CapacitanceUnbalancePageState extends State<CapacitanceUnbalancePage> {
 
                 // Input Fields - Now two for capacitance
                 _buildInputRow(
-                  label: 'Capacitance (C_AG):', // Label for AG
+                  label: 'Capacitance (CAG):', // Label for AG
                   controller: _capacitanceAGController,
                   selectedUnit: _selectedCapacitanceUnitAG, // Use AG state variable
                   unitOptions: const ['nF', 'pF', 'µF'],
@@ -256,7 +255,7 @@ class CapacitanceUnbalancePageState extends State<CapacitanceUnbalancePage> {
                   onUnitChanged: (val) => setState(() => _selectedCapacitanceUnitAG = val!),
                 ),
                  _buildInputRow(
-                  label: 'Capacitance (C_BG):', // Label for BG
+                  label: 'Capacitance (CBG):', // Label for BG
                   controller: _capacitanceBGController,
                   selectedUnit: _selectedCapacitanceUnitBG, // Use BG state variable
                   unitOptions: const ['nF', 'pF', 'µF'],
@@ -310,21 +309,17 @@ class CapacitanceUnbalancePageState extends State<CapacitanceUnbalancePage> {
                                 // --- Cum Result Block ---
                                 const Text('Mutual Unbalance (Cum)', style: boldStyle),
                                 const SizedBox(height: 5),
-                                Text('Formula: (CAG - CBG) / L (km)', style: formulaStyle), // Updated formula text
-                                Text('Calculated: ${_calculatedResultCum ?? '...'}', 
-                                style: TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87)),
+                                Text('  Formula: (CAG - CBG) / L (km)', style: resultValueStyle), // Updated formula text
+                                Text('  Calculated: ${_calculatedResultCum ?? '...'}', style: resultValueStyle),
                                 const SizedBox(height: 10),
                                 const Divider(height: 20, thickness: 1),
 
                                 // --- Cu Result Block ---
                                 const Text('Unbalance to Earth (Cu)', style: boldStyle),
                                 const SizedBox(height: 5),
-                                Text('Formula: Cum * 500 / L (m)', style: formulaStyle),
-                                Text('Spec Max: ${_currentSpecMax.toStringAsFixed(1)} pF/500m', style: formulaStyle),
-                                Text('Calculated: ${_calculatedResultCu ?? '...'}', 
-                                style: TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87)),
+                                Text('  Formula: Cum * 500 / L (m)', style: resultValueStyle),
+                                Text('  Spec Max: ${_currentSpecMax.toStringAsFixed(1)} pF/500m', style: resultValueStyle),
+                                Text('  Calculated: ${_calculatedResultCu ?? '...'}', style: resultValueStyle),
                                 const SizedBox(height: 10),
 
                                 // --- Pass/Fail Comparison Block ---

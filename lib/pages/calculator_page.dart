@@ -65,7 +65,7 @@ class _CalculatorPageState extends State<CalculatorPage> {
       if (_operand.isEmpty) {
         _output = _currentInput.isEmpty ? "0" : _currentInput;
       } else {
-        _output = "${_formatOutput(_num1)} $_operand${_currentInput.isEmpty ? "" : (" " + _currentInput)}";
+        _output = "${_formatOutput(_num1)} $_operand${_currentInput.isEmpty ? "" : (" $_currentInput")}";
       }
     } else if (_operand.isNotEmpty) { // _currentInput is empty, but there's an operator (e.g. "123 + ")
       _operand = "";
