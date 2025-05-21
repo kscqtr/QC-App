@@ -30,6 +30,7 @@ class TubularSampleResults { // Kept original name, but represents IEC60332_3_22
   final String density;
   final String volume;
   final double rawVolumeLM;
+  final double totalTestPieces;
 
   TubularSampleResults({
     required this.material,
@@ -37,6 +38,7 @@ class TubularSampleResults { // Kept original name, but represents IEC60332_3_22
     required this.density,
     required this.volume,
     required this.rawVolumeLM,
+    required this.totalTestPieces,
   });
 
   @override
@@ -52,6 +54,7 @@ class DumbbellSampleResults { // Kept original name, but represents IEC60332_3_2
   final String density;
   final String volume;
   final double rawVolumeLM;
+  final double totalTestPieces;
 
   DumbbellSampleResults({
     required this.material,
@@ -59,11 +62,12 @@ class DumbbellSampleResults { // Kept original name, but represents IEC60332_3_2
     required this.density,
     required this.volume,
     required this.rawVolumeLM,
+    required this.totalTestPieces,
   });
 
   @override
   String toString() {
-    return 'Material: $material, Weight: $weight, Density: $density, Volume: $volume, RawVolume: $rawVolumeLM';
+    return 'Material: $material, Weight: $weight, Density: $density, Volume: $volume, RawVolume: $rawVolumeLM, TestPieces: $totalTestPieces';
   }
 }
 
@@ -95,7 +99,8 @@ class IEC60332PageState extends State<IEC60332Page> {
 
   String _totalVolumeDisplay = "";
   double _rawTotalVolumeLM = 0.0; 
-
+  String _testPiecesPerTotalVolumeDisplay = "";
+  
   @override
   void initState() {
     super.initState();
@@ -110,7 +115,8 @@ class IEC60332PageState extends State<IEC60332Page> {
     _calculatedResults =
         List.filled(_sampleControllers.length, null, growable: true);
     _totalVolumeDisplay = ""; // Reset display string
-    _rawTotalVolumeLM = 0.0;  // <-- Reset raw total volume
+    _rawTotalVolumeLM = 0.0;  // Reset raw total volume
+    _testPiecesPerTotalVolumeDisplay = "";
   }
 
   @override
@@ -205,8 +211,8 @@ class IEC60332PageState extends State<IEC60332Page> {
       _showResultTab = false;
       _totalVolumeDisplay = "";
       _rawTotalVolumeLM = 0.0;
+      _testPiecesPerTotalVolumeDisplay = "";
     });
-    // Simplified: _calculateNewValues handles the logic based on _selectedIECType for result instantiation
     _calculateNewValues(); 
   }
 
@@ -263,7 +269,8 @@ class IEC60332PageState extends State<IEC60332Page> {
           double volumeLM = volumeCm3 / 1000; 
 
           currentRunningTotalVolumeLM += volumeLM; 
-          validCalculationsCount++;       
+          validCalculationsCount++;    
+          double individualTestPieces = (_selectedIECType == IECTestType.iEC60332_3_22) ? 7.0 : 1.5;   
 
           if (_selectedIECType == IECTestType.iEC60332_3_22) {
             tempResults[i] = TubularSampleResults( 
@@ -272,6 +279,7 @@ class IEC60332PageState extends State<IEC60332Page> {
               density: '${density.toStringAsFixed(2)} g/cm³',
               volume: '${volumeLM.toStringAsFixed(4)} l/m', 
               rawVolumeLM: volumeLM,
+              totalTestPieces: individualTestPieces,
             );
           } else { // IECTestType.iEC60332_3_24
              tempResults[i] = DumbbellSampleResults( 
@@ -280,6 +288,7 @@ class IEC60332PageState extends State<IEC60332Page> {
               density: '${density.toStringAsFixed(2)} g/cm³',
               volume: '${volumeLM.toStringAsFixed(4)} l/m', 
               rawVolumeLM: volumeLM,
+              totalTestPieces: individualTestPieces,
             );
           }
         }
@@ -297,11 +306,18 @@ class IEC60332PageState extends State<IEC60332Page> {
         _calculationError = firstErrorMsg;
         _totalVolumeDisplay = ""; 
         _rawTotalVolumeLM = 0.0; 
+        _testPiecesPerTotalVolumeDisplay = "";
       } else if (validCalculationsCount > 0) { 
         _totalVolumeDisplay = "Total Volume: ${currentRunningTotalVolumeLM.toStringAsFixed(4)} l/m";
+        if (_rawTotalVolumeLM > 1e-9) { // Avoid division by zero
+          double numerator = (_selectedIECType == IECTestType.iEC60332_3_22) ? 7.0 : 1.5;
+          double testPiecesPerVolume = numerator / _rawTotalVolumeLM;
+          _testPiecesPerTotalVolumeDisplay = "Test Pieces: ${testPiecesPerVolume.toStringAsFixed(0)}"; // Adjust unit/label as needed
+        }
       } else {
         _totalVolumeDisplay = ""; 
         _rawTotalVolumeLM = 0.0; 
+        _testPiecesPerTotalVolumeDisplay = "";
       }
 
       bool hasActualCalculations = _calculatedResults.any((r) => r is TubularSampleResults || r is DumbbellSampleResults);
@@ -337,6 +353,7 @@ class IEC60332PageState extends State<IEC60332Page> {
       _showResultTab = false;
       _totalVolumeDisplay = "";
       _rawTotalVolumeLM = 0.0;
+      _testPiecesPerTotalVolumeDisplay = "";
       if (resetType) {
         _selectedIECType = IECTestType.iEC60332_3_22; // Default IEC type
       }
@@ -366,6 +383,7 @@ class IEC60332PageState extends State<IEC60332Page> {
             _calculationError = null;
             _totalVolumeDisplay = ""; // Clear total on input change
             _rawTotalVolumeLM = 0.0;
+            _testPiecesPerTotalVolumeDisplay = "";
         }),
       ),
     );
@@ -405,6 +423,7 @@ class IEC60332PageState extends State<IEC60332Page> {
                   _calculationError = null;
                   _totalVolumeDisplay = ""; // Clear total on input change
                   _rawTotalVolumeLM = 0.0;
+                  _testPiecesPerTotalVolumeDisplay = "";
                 });
               },
               isExpanded: true, 
@@ -597,7 +616,11 @@ class IEC60332PageState extends State<IEC60332Page> {
                                       String percentageText = "";
                                       if (_rawTotalVolumeLM > 1e-9 && individualRawVolume > 0) { 
                                         double percentage = (individualRawVolume / _rawTotalVolumeLM) * 100;
-                                        percentageText = " (${percentage.toStringAsFixed(1)}%)"; 
+                                        if (percentage < 5){
+                                          densityRes = "1 g/cm³";
+                                        }
+                                        percentageText = " (${percentage.toStringAsFixed(2)}%)"; 
+                                        
                                       }
                                       return Padding(
                                         padding: const EdgeInsets.symmetric(vertical: 6.0),
@@ -612,7 +635,7 @@ class IEC60332PageState extends State<IEC60332Page> {
                                                 children: [
                                                   Text('Weight: $weightRes', style: resultValueStyle),
                                                   Text('Density: $densityRes', style: resultValueStyle),
-                                                  Text('Volume: $volumeDisplayStr$percentageText', style: resultValueStyle), // Corrected Line
+                                                  Text('Volume: $volumeDisplayStr$percentageText', style: resultValueStyle), 
                                                 ],
                                               ),
                                             ),
@@ -630,15 +653,37 @@ class IEC60332PageState extends State<IEC60332Page> {
                                   Padding(
                                     padding: const EdgeInsets.only(top: 16.0), 
                                     child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         const Divider(height: 10, thickness: 0.8, color: Colors.blueGrey),
                                         Padding(
                                           padding: const EdgeInsets.symmetric(vertical: 8.0),
                                           child: Text(
                                             _totalVolumeDisplay,
-                                            style: boldStyle.copyWith(fontSize: 16, color: Theme.of(context).primaryColorDark), 
+                                            style: boldStyle.copyWith(fontSize: 15, color: Theme.of(context).primaryColorDark), 
                                             textAlign: TextAlign.center,
                                           ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                if (_testPiecesPerTotalVolumeDisplay.isNotEmpty && _calculationError == null)
+                                  Padding(
+                                    // Add a small top padding if total volume was also displayed,
+                                    // otherwise more top padding if it's the first summary line.
+                                    padding: EdgeInsets.only(
+                                      top: _totalVolumeDisplay.isNotEmpty ? 0.5 : 16.0, 
+                                      bottom: 8.0
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        // Only add a divider if Total Volume was NOT shown but this is.
+                                        if (_totalVolumeDisplay.isEmpty && _calculatedResults.any((r) => r != null && r != "SKIPPED"))
+                                           const Divider(height: 10, thickness: 0.8, color: Colors.blueGrey),
+                                        Text( // Removed the inner Padding and Column for direct Text display
+                                          '$_testPiecesPerTotalVolumeDisplay pcs x 3.5m',
+                                          style: boldStyle.copyWith(fontSize: 15, color: Theme.of(context).primaryColorDark), 
+                                          textAlign: TextAlign.start,
                                         ),
                                       ],
                                     ),
