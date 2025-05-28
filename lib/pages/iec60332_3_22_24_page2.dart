@@ -609,7 +609,11 @@ class IEC60332Page2State extends State<IEC60332Page2> {
                                                   Text('Ladder: $ladder', style: resultValueStyle),
                                                   Text('Wire Size: $wireSize', style: resultValueStyle),
                                                   Text('Burner: $burner', style: resultValueStyle),
-                                                  Text('Array: $array', style: resultValueStyle)
+                                                  if (conductor == "≤ 35mm²")
+                                                    Text('Array: $array', style: resultValueStyle),
+
+                                                  if (conductor == "≥ 50mm²")       
+                                                    Text('Actual # Test Pieces: $array', style: resultValueStyle),
                                                 ],
                                               ),
                                             ),
