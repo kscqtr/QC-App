@@ -244,7 +244,7 @@ class _SelectionPageState extends State<SelectionPage> {
               title: const Text('About'),
               onTap: () {
                  Navigator.pop(context);
-                 showAboutDialog(context: context, applicationName: 'Keystone App', applicationVersion: '25.05.09'); // User updated version
+                 showAboutDialog(context: context, applicationName: 'Keystone App', applicationVersion: '25.05.23'); // User updated version
               },
             ),
           ],

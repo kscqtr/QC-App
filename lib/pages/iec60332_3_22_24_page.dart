@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-// import 'dart:math'; // No longer needed for pi
+import 'iec60332_3_22_24_page2.dart'; // Import the next page
 
 // Enum for IEC Test Types
 enum IECTestType { iEC60332_3_22, iEC60332_3_24 }
@@ -23,16 +23,16 @@ class IECSampleControllers {
   }
 }
 
-// Result class for IEC60332-3-22 (structurally same as Dumbbell for now)
-class TubularSampleResults { // Kept original name, but represents IEC60332_3_22 result
+// Result class for IEC60332-3-22 
+class IEC22Results { // IEC60332_3_22 result
   final String material;
   final String weight;
   final String density;
   final String volume;
   final double rawVolumeLM;
-  final double totalTestPieces;
+  final double totalTestPieces; // This is the 7.0 or 1.5 for this specific entry's context
 
-  TubularSampleResults({
+  IEC22Results({
     required this.material,
     required this.weight,
     required this.density,
@@ -43,20 +43,20 @@ class TubularSampleResults { // Kept original name, but represents IEC60332_3_22
 
   @override
   String toString() {
-    return 'Material: $material, Weight: $weight, Density: $density, Volume: $volume, RawVolume: $rawVolumeLM';
+    return 'Material: $material, Weight: $weight, Density: $density, Volume: $volume, RawVolume: $rawVolumeLM, EntryTestPieces: $totalTestPieces';
   }
 }
 
-// Result class for IEC60332-3-24 (structurally same as Tubular for now)
-class DumbbellSampleResults { // Kept original name, but represents IEC60332_3_24 result
+// Result class for IEC60332-3-24 
+class IEC24Results { // IEC60332_3_24 result
   final String material;
   final String weight;
   final String density;
   final String volume;
   final double rawVolumeLM;
-  final double totalTestPieces;
+  final double totalTestPieces; // This is the 7.0 or 1.5 for this specific entry's context
 
-  DumbbellSampleResults({
+  IEC24Results({
     required this.material,
     required this.weight,
     required this.density,
@@ -67,7 +67,7 @@ class DumbbellSampleResults { // Kept original name, but represents IEC60332_3_2
 
   @override
   String toString() {
-    return 'Material: $material, Weight: $weight, Density: $density, Volume: $volume, RawVolume: $rawVolumeLM, TestPieces: $totalTestPieces';
+    return 'Material: $material, Weight: $weight, Density: $density, Volume: $volume, RawVolume: $rawVolumeLM, EntryTestPieces: $totalTestPieces';
   }
 }
 
@@ -80,26 +80,25 @@ class IEC60332Page extends StatefulWidget {
 
 class IEC60332PageState extends State<IEC60332Page> {
   IECTestType _selectedIECType = IECTestType.iEC60332_3_22;
-  List<IECSampleControllers> _sampleControllers = [IECSampleControllers()]; // Renamed for clarity
+  List<IECSampleControllers> _sampleControllers = [IECSampleControllers()];
   List<dynamic> _calculatedResults = [];
   String? _calculationError;
   bool _showResultTab = false;
   final int _maxSamples = 10;
   final ScrollController _scrollController = ScrollController();
+  double _calculatedTestPiecesPage2 = 0.0; 
 
-  // Updated material density data
   final Map<String, double> _materialDensityData = {
-    'Mica Tape': 1.6,   // g/cm³
-    'XLPE': 0.94,       // g/cm³
-    'PP Yarn': 1.47,    // g/cm³ - Note: PP density is usually lower, around 0.9. Please verify.
-    'FRT Tape': 1.4,    // g/cm³ - Flame Retardant Tape, density can vary.
-    'LSZH': 1.47,       // g/cm³
-    // Add more materials and their densities here
+    'Mica Tape': 1.6,
+    'XLPE': 0.94,
+    'PP Yarn': 1.47,
+    'FRT Tape': 1.4,
+    'LSZH': 1.47,
   };
 
   String _totalVolumeDisplay = "";
   double _rawTotalVolumeLM = 0.0; 
-  String _testPiecesPerTotalVolumeDisplay = "";
+  String _testPiecesPerTotalVolumeDisplay = ""; // For displaying "Test Pieces: X" on this page
   
   @override
   void initState() {
@@ -114,9 +113,12 @@ class IEC60332PageState extends State<IEC60332Page> {
     _sampleControllers = [IECSampleControllers()];
     _calculatedResults =
         List.filled(_sampleControllers.length, null, growable: true);
-    _totalVolumeDisplay = ""; // Reset display string
-    _rawTotalVolumeLM = 0.0;  // Reset raw total volume
+    _totalVolumeDisplay = "";
+    _rawTotalVolumeLM = 0.0; 
     _testPiecesPerTotalVolumeDisplay = "";
+    _calculatedTestPiecesPage2 = 0.0; // Reset this as well
+    _calculationError = null;
+    _showResultTab = false;
   }
 
   @override
@@ -132,8 +134,6 @@ class IEC60332PageState extends State<IEC60332Page> {
     if (newType != null && newType != _selectedIECType) {
       setState(() {
         _selectedIECType = newType;
-        // Reset fields but keep the newly selected type.
-        // Also, clear results as the test type context has changed.
         _resetFields(resetType: false); 
       });
     }
@@ -153,16 +153,17 @@ class IEC60332PageState extends State<IEC60332Page> {
     }
   }
 
-  void _addMaterial() { // Renamed from _addSample
+  void _addMaterial() { 
     if (_sampleControllers.length < _maxSamples) {
       setState(() {
         _sampleControllers.add(IECSampleControllers());
-        // Ensure _calculatedResults list is extended correctly
         _calculatedResults = List.filled(_sampleControllers.length, null, growable: true);
         _showResultTab = false;
         _calculationError = null;
-        _totalVolumeDisplay = ""; // Clear total when adding new material
+        _totalVolumeDisplay = ""; 
         _rawTotalVolumeLM = 0.0;
+        _testPiecesPerTotalVolumeDisplay = "";
+        _calculatedTestPiecesPage2 = 0.0; 
       });
       Future.delayed(const Duration(milliseconds: 50), _scrollToBottom);
     } else {
@@ -172,29 +173,17 @@ class IEC60332PageState extends State<IEC60332Page> {
     }
   }
 
-  void _removeMaterial(int index) { // Renamed from _removeSample
-    if (_sampleControllers.length > 1) { // Allow removing if more than one material exists
+  void _removeMaterial(int index) { 
+    if (_sampleControllers.length > 1) { 
       setState(() {
         _sampleControllers[index].dispose();
         _sampleControllers.removeAt(index);
         if (_calculatedResults.length > index) {
           _calculatedResults.removeAt(index);
         }
-        bool hasAnyValidResult = _calculatedResults.any((r) => r != null && r != "SKIPPED");
-        if (!hasAnyValidResult && _calculationError == null) {
-            _showResultTab = false;
-            _totalVolumeDisplay = ""; // Clear total if no valid results
-            _rawTotalVolumeLM = 0.0;
-        } else {
-            // Recalculate total if some results remain
-            _performCalculations(); // This will re-evaluate everything including total
-            _showResultTab = _calculatedResults.any((r) => r != null) || _calculationError != null;
-        }
-        if (!_showResultTab) {
-            _calculationError = null;
-            _totalVolumeDisplay = "";
-            _rawTotalVolumeLM = 0.0;
-        }
+        // After removing, always recalculate to update totals and individual percentages
+        _performCalculations(); 
+        // _showResultTab will be set by _performCalculations
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -208,19 +197,49 @@ class IEC60332PageState extends State<IEC60332Page> {
     setState(() {
       _calculationError = null;
       _calculatedResults = List.filled(_sampleControllers.length, null, growable: true);
-      _showResultTab = false;
+      _showResultTab = false; // Will be set to true if there are results or errors
       _totalVolumeDisplay = "";
       _rawTotalVolumeLM = 0.0;
       _testPiecesPerTotalVolumeDisplay = "";
+      _calculatedTestPiecesPage2 = 0.0; // Reset before calculation
     });
     _calculateNewValues(); 
+  }
+
+  void _navigateToNextPage() {
+    if (!_showResultTab || (_calculationError != null && !_calculatedResults.any((r) => r is IEC22Results || r is IEC24Results))) {
+      bool allSkippedOrNullAndNoError = _calculatedResults.whereType<dynamic>().every((res) => res == "SKIPPED" || res == null) && _calculationError == null;
+      if (allSkippedOrNullAndNoError && _rawTotalVolumeLM <= 1e-9) {
+          // Allow navigation if all were skipped, _calculatedTestPiecesPage2 will be 0.0 or based on zero volume
+          // Page 2 should handle a zero or near-zero _calculatedTestPiecesPage2 gracefully.
+      } else if (allSkippedOrNullAndNoError && _rawTotalVolumeLM > 1e-9) {
+          // All skipped but there was some volume? This case might be rare.
+          // Still, allow navigation, Page 2 will get the calculated ratio.
+      }
+      else {
+         ScaffoldMessenger.of(context).showSnackBar(
+             const SnackBar(content: Text('Please perform a valid calculation on this page first.')),
+         );
+         return;
+      }
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => IEC60332Page2(
+          calculatedTestPiecesFromPage1: _calculatedTestPiecesPage2, 
+        ),
+      ),
+    );
   }
 
   void _calculateNewValues() {
     List<dynamic> tempResults = List.filled(_sampleControllers.length, null, growable: true);
     String? firstErrorMsg;
-    double currentRunningTotalVolumeLM = 0.0; // Local variable for summing in this run
+    double currentRunningTotalVolumeLM = 0.0; 
     int validCalculationsCount = 0;
+    double localCalculatedTestPiecesRatio = 0.0; // For the value to be passed to Page 2
 
     for (int i = 0; i < _sampleControllers.length; i++) {
       final controllers = _sampleControllers[i];
@@ -269,26 +288,26 @@ class IEC60332PageState extends State<IEC60332Page> {
           double volumeLM = volumeCm3 / 1000; 
 
           currentRunningTotalVolumeLM += volumeLM; 
-          validCalculationsCount++;    
+          validCalculationsCount++;       
           double individualTestPieces = (_selectedIECType == IECTestType.iEC60332_3_22) ? 7.0 : 1.5;   
 
           if (_selectedIECType == IECTestType.iEC60332_3_22) {
-            tempResults[i] = TubularSampleResults( 
+            tempResults[i] = IEC22Results( 
               material: materialKey,
               weight: '${weight.toStringAsFixed(2)} g',
               density: '${density.toStringAsFixed(2)} g/cm³',
               volume: '${volumeLM.toStringAsFixed(4)} l/m', 
               rawVolumeLM: volumeLM,
-              totalTestPieces: individualTestPieces,
+              totalTestPieces: individualTestPieces, // This is the 7 or 1.5 for this specific entry
             );
           } else { // IECTestType.iEC60332_3_24
-             tempResults[i] = DumbbellSampleResults( 
+             tempResults[i] = IEC24Results( 
               material: materialKey,
               weight: '${weight.toStringAsFixed(2)} g',
               density: '${density.toStringAsFixed(2)} g/cm³',
               volume: '${volumeLM.toStringAsFixed(4)} l/m', 
               rawVolumeLM: volumeLM,
-              totalTestPieces: individualTestPieces,
+              totalTestPieces: individualTestPieces, // This is the 7 or 1.5 for this specific entry
             );
           }
         }
@@ -300,40 +319,46 @@ class IEC60332PageState extends State<IEC60332Page> {
 
     setState(() {
       _calculatedResults = tempResults;
-      _rawTotalVolumeLM = currentRunningTotalVolumeLM; // Set state for raw total volume
+      _rawTotalVolumeLM = currentRunningTotalVolumeLM;
 
       if (firstErrorMsg != null) {
         _calculationError = firstErrorMsg;
         _totalVolumeDisplay = ""; 
         _rawTotalVolumeLM = 0.0; 
         _testPiecesPerTotalVolumeDisplay = "";
+        _calculatedTestPiecesPage2 = 0.0; // Reset on error
       } else if (validCalculationsCount > 0) { 
         _totalVolumeDisplay = "Total Volume: ${currentRunningTotalVolumeLM.toStringAsFixed(4)} l/m";
-        if (_rawTotalVolumeLM > 1e-9) { // Avoid division by zero
+        if (_rawTotalVolumeLM > 1e-9) { 
           double numerator = (_selectedIECType == IECTestType.iEC60332_3_22) ? 7.0 : 1.5;
-          double testPiecesPerVolume = numerator / _rawTotalVolumeLM;
-          _testPiecesPerTotalVolumeDisplay = "Test Pieces: ${testPiecesPerVolume.toStringAsFixed(0)}"; // Adjust unit/label as needed
+          localCalculatedTestPiecesRatio = (numerator / _rawTotalVolumeLM).ceilToDouble(); // Calculate raw ratio
+          _testPiecesPerTotalVolumeDisplay = "Test Pieces: ${localCalculatedTestPiecesRatio.toStringAsFixed(0)}"; 
+        } else {
+           _testPiecesPerTotalVolumeDisplay = "Test Pieces: N/A (Total Volume is zero)";
+           localCalculatedTestPiecesRatio = 0.0; // Ensure it's zero if not calculable
         }
-      } else {
+      } else { // No valid calculations
         _totalVolumeDisplay = ""; 
         _rawTotalVolumeLM = 0.0; 
         _testPiecesPerTotalVolumeDisplay = "";
+        localCalculatedTestPiecesRatio = 0.0; // Ensure it's zero
       }
+      _calculatedTestPiecesPage2 = localCalculatedTestPiecesRatio; // Store the raw ratio for Page 2
 
-      bool hasActualCalculations = _calculatedResults.any((r) => r is TubularSampleResults || r is DumbbellSampleResults);
+      bool hasActualCalculations = _calculatedResults.any((r) => r is IEC22Results || r is IEC24Results);
       bool hasSkipped = _calculatedResults.any((r) => r == "SKIPPED");
 
       if (hasActualCalculations || _calculationError != null || hasSkipped) {
         if (!hasActualCalculations && _calculationError == null && hasSkipped) {
           _calculationError = "All valid entries were skipped. No results to display.";
         } else if (!hasActualCalculations && _calculationError == null && !hasSkipped) {
-          if (_totalVolumeDisplay.isEmpty) { // Check if total is also empty
+          if (_totalVolumeDisplay.isEmpty && _testPiecesPerTotalVolumeDisplay.isEmpty) { 
              _calculationError = "No valid data entered for calculation.";
           }
         }
         _showResultTab = true;
       } else {
-        if (_totalVolumeDisplay.isEmpty) { // If no results and no total, then no data
+        if (_totalVolumeDisplay.isEmpty && _testPiecesPerTotalVolumeDisplay.isEmpty) { 
             _calculationError = "No data to process.";
         }
         _showResultTab = true; 
@@ -354,8 +379,9 @@ class IEC60332PageState extends State<IEC60332Page> {
       _totalVolumeDisplay = "";
       _rawTotalVolumeLM = 0.0;
       _testPiecesPerTotalVolumeDisplay = "";
+      _calculatedTestPiecesPage2 = 0.0; // Reset here
       if (resetType) {
-        _selectedIECType = IECTestType.iEC60332_3_22; // Default IEC type
+        _selectedIECType = IECTestType.iEC60332_3_22; 
       }
     });
   }
@@ -381,9 +407,10 @@ class IEC60332PageState extends State<IEC60332Page> {
         onChanged: (value) => setState(() {
             _showResultTab = false;
             _calculationError = null;
-            _totalVolumeDisplay = ""; // Clear total on input change
+            _totalVolumeDisplay = ""; 
             _rawTotalVolumeLM = 0.0;
             _testPiecesPerTotalVolumeDisplay = "";
+            _calculatedTestPiecesPage2 = 0.0; // Reset on input change
         }),
       ),
     );
@@ -391,7 +418,7 @@ class IEC60332PageState extends State<IEC60332Page> {
 
   Widget _buildMaterialInputRow(int index) {
     final controllers = _sampleControllers[index];
-    const String materialFieldLabel = 'Material';
+    final String materialFieldLabel = 'Material ${index + 1}';
     const String weightFieldLabel = 'Weight (g)';
 
     return Padding( 
@@ -402,12 +429,12 @@ class IEC60332PageState extends State<IEC60332Page> {
           Expanded( 
             flex: 2, 
             child: DropdownButtonFormField<String>(
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: materialFieldLabel,
-                labelStyle: TextStyle(fontSize: 14.0),
-                border: OutlineInputBorder(),
-                isDense: true,
-                contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                labelStyle: const TextStyle(fontSize: 14.0), // Removed const
+                border: const OutlineInputBorder(),      // Kept const
+                isDense: true,                           // Kept const
+                contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10), // Kept const
               ),
               value: controllers.selectedMaterialKey,
               items: _materialDensityData.keys.map((String key) {
@@ -421,9 +448,10 @@ class IEC60332PageState extends State<IEC60332Page> {
                   controllers.selectedMaterialKey = newValue;
                   _showResultTab = false;
                   _calculationError = null;
-                  _totalVolumeDisplay = ""; // Clear total on input change
+                  _totalVolumeDisplay = ""; 
                   _rawTotalVolumeLM = 0.0;
                   _testPiecesPerTotalVolumeDisplay = "";
+                  _calculatedTestPiecesPage2 = 0.0; // Reset on input change
                 });
               },
               isExpanded: true, 
@@ -441,7 +469,7 @@ class IEC60332PageState extends State<IEC60332Page> {
           if (_sampleControllers.length > 1)
             IconButton(
               icon: Icon(Icons.remove_circle_outline, color: Colors.red.shade700),
-              tooltip: 'Remove Material', // Changed tooltip
+              tooltip: 'Remove Material ${index + 1}', 
               padding: const EdgeInsets.only(left: 8.0), 
               constraints: const BoxConstraints(),
               onPressed: () => _removeMaterial(index),
@@ -461,7 +489,7 @@ class IEC60332PageState extends State<IEC60332Page> {
     final resultValueStyle = normalStyle.copyWith(fontSize: 14);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('IEC 60332-3-22/24')),
+      appBar: AppBar(title: const Text('IEC 60332-3 Non-Metallic Volume')), // Updated AppBar Title
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(
@@ -475,15 +503,15 @@ class IEC60332PageState extends State<IEC60332Page> {
                   padding: const EdgeInsets.symmetric(vertical: 10.0),
                   child: DropdownButtonFormField<IECTestType>(
                     decoration: const InputDecoration(
-                      labelText: 'Select IEC Test:',
+                      labelText: 'Select IEC Test:', // Changed label
                       border: OutlineInputBorder(),
                       contentPadding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
                     ),
                     value: _selectedIECType,
                     items: IECTestType.values.map((IECTestType type) {
                       String typeName = type.toString().split('.').last;
-                      if (type == IECTestType.iEC60332_3_22) typeName = "IEC 60332-3-22";
-                      if (type == IECTestType.iEC60332_3_24) typeName = "IEC 60332-3-24";
+                      if (type == IECTestType.iEC60332_3_22) typeName = "IEC 60332-3-22"; // More descriptive
+                      if (type == IECTestType.iEC60332_3_24) typeName = "IEC 60332-3-24"; // More descriptive
                       return DropdownMenuItem<IECTestType>(
                         value: type,
                         child: Text(typeName),
@@ -544,6 +572,19 @@ class IEC60332PageState extends State<IEC60332Page> {
                         style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.blueGrey.shade300,
                             minimumSize: const Size(140, 45))), 
+                    
+                    const SizedBox(width: 8),
+
+                     ElevatedButton.icon(
+                        onPressed: _navigateToNextPage,
+                        icon: const Icon(Icons.arrow_forward),
+                        label: const Text('Next Page'),
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green, // Changed color for distinction
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size(140, 45),
+                        ),
+                       ),
                   ],
                 ),
                 const SizedBox(height: 30),
@@ -556,25 +597,25 @@ class IEC60332PageState extends State<IEC60332Page> {
                           constraints: const BoxConstraints(maxWidth: 380),
                           padding: const EdgeInsets.all(16.0),
                           decoration: BoxDecoration(
-                            color: _calculationError != null && !(_calculatedResults.any((r) => r is TubularSampleResults || r is DumbbellSampleResults))
+                            color: _calculationError != null && !(_calculatedResults.any((r) => r is IEC22Results || r is IEC24Results))
                                 ? Colors.red[50]
                                 : Colors.blue[50],
                             borderRadius: BorderRadius.circular(8.0),
                             border: Border.all(
-                                color: _calculationError != null && !(_calculatedResults.any((r) => r is TubularSampleResults || r is DumbbellSampleResults))
+                                color: _calculationError != null && !(_calculatedResults.any((r) => r is IEC22Results || r is IEC24Results))
                                     ? Colors.red.shade300
                                     : Colors.blue.shade200),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              if (_calculationError != null && !(_calculatedResults.any((r) => r is TubularSampleResults || r is DumbbellSampleResults)))
+                              if (_calculationError != null && !(_calculatedResults.any((r) => r is IEC22Results || r is IEC24Results)))
                                 Text(_calculationError!, style: errorStyle)
                               else ...[
-                                Text(
+                                Text( // Results Title
                                   _selectedIECType == IECTestType.iEC60332_3_22 
-                                      ? 'Calculation Results (IEC 60332-3-22):' 
-                                      : 'Calculation Results (IEC 60332-3-24):',
+                                      ? 'Results (IEC 60332-3-22):' 
+                                      : 'Results (IEC 60332-3-24):',
                                   style: boldStyle
                                 ),
                                 if (_calculationError != null)
@@ -582,7 +623,7 @@ class IEC60332PageState extends State<IEC60332Page> {
                                     padding: const EdgeInsets.only(top: 5.0, bottom: 8.0),
                                     child: Text(_calculationError!, style: errorStyle.copyWith(fontSize: 14)),
                                   ),
-                                ListView.builder(
+                                ListView.builder( // Individual Material Results
                                   shrinkWrap: true,
                                   physics: const NeverScrollableScrollPhysics(),
                                   itemCount: _calculatedResults.length,
@@ -598,13 +639,13 @@ class IEC60332PageState extends State<IEC60332Page> {
                                     String materialRes = "", weightRes = "", densityRes = "", volumeDisplayStr = "";
                                     double individualRawVolume = 0.0;
 
-                                    if (result is TubularSampleResults) { 
+                                    if (result is IEC22Results) { 
                                         materialRes = result.material;
                                         weightRes = result.weight;
                                         densityRes = result.density;
                                         volumeDisplayStr = result.volume;
                                         individualRawVolume = result.rawVolumeLM;
-                                    } else if (result is DumbbellSampleResults) { 
+                                    } else if (result is IEC24Results) { 
                                         materialRes = result.material;
                                         weightRes = result.weight;
                                         densityRes = result.density;
@@ -616,11 +657,13 @@ class IEC60332PageState extends State<IEC60332Page> {
                                       String percentageText = "";
                                       if (_rawTotalVolumeLM > 1e-9 && individualRawVolume > 0) { 
                                         double percentage = (individualRawVolume / _rawTotalVolumeLM) * 100;
-                                        if (percentage < 5){
-                                          densityRes = "1 g/cm³";
-                                        }
+                                        // The densityRes override logic seems out of place for a volume percentage.
+                                        // If you want to change density display based on percentage, it should be handled carefully.
+                                        // For now, I'll keep the percentage calculation as is.
+                                        // if (percentage < 5){
+                                        //   densityRes = "1 g/cm³"; // This was an odd override
+                                        // }
                                         percentageText = " (${percentage.toStringAsFixed(2)}%)"; 
-                                        
                                       }
                                       return Padding(
                                         padding: const EdgeInsets.symmetric(vertical: 6.0),
@@ -649,41 +692,42 @@ class IEC60332PageState extends State<IEC60332Page> {
                                   },
                                 ),
 
+                                // Total Volume Display
                                 if (_totalVolumeDisplay.isNotEmpty && _calculationError == null)
                                   Padding(
                                     padding: const EdgeInsets.only(top: 16.0), 
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment: CrossAxisAlignment.start, 
                                       children: [
                                         const Divider(height: 10, thickness: 0.8, color: Colors.blueGrey),
                                         Padding(
                                           padding: const EdgeInsets.symmetric(vertical: 8.0),
-                                          child: Text(
+                                          child: Text( 
                                             _totalVolumeDisplay,
                                             style: boldStyle.copyWith(fontSize: 15, color: Theme.of(context).primaryColorDark), 
-                                            textAlign: TextAlign.center,
+                                            textAlign: TextAlign.start, 
                                           ),
                                         ),
                                       ],
                                     ),
                                   ),
+                                
+                                // Test Pieces per Total Volume Display (Now "Test Pieces (Calculated)")
                                 if (_testPiecesPerTotalVolumeDisplay.isNotEmpty && _calculationError == null)
                                   Padding(
-                                    // Add a small top padding if total volume was also displayed,
-                                    // otherwise more top padding if it's the first summary line.
                                     padding: EdgeInsets.only(
-                                      top: _totalVolumeDisplay.isNotEmpty ? 0.5 : 16.0, 
+                                      top: _totalVolumeDisplay.isNotEmpty ? 4.0 : 16.0, 
                                       bottom: 8.0
                                     ),
                                     child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start, 
                                       children: [
-                                        // Only add a divider if Total Volume was NOT shown but this is.
                                         if (_totalVolumeDisplay.isEmpty && _calculatedResults.any((r) => r != null && r != "SKIPPED"))
                                            const Divider(height: 10, thickness: 0.8, color: Colors.blueGrey),
-                                        Text( // Removed the inner Padding and Column for direct Text display
-                                          '$_testPiecesPerTotalVolumeDisplay pcs x 3.5m',
+                                        Text( 
+                                          '$_testPiecesPerTotalVolumeDisplay pcs x 3.5m', // Displaying the calculated ratio
                                           style: boldStyle.copyWith(fontSize: 15, color: Theme.of(context).primaryColorDark), 
-                                          textAlign: TextAlign.start,
+                                          textAlign: TextAlign.start, 
                                         ),
                                       ],
                                     ),
