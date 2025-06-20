@@ -17,7 +17,6 @@ class _HotSetWeightSelectionPageState extends State<HotSetWeightSelectionPage> {
   // State for current index
   int _currentCarouselIndex = 0;
 
-  // --- REMOVED: Expansion State Map ---
   // final Map<String, bool> _isExpanded = {};
 
   // Define the items list data

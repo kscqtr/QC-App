@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class TestPage extends StatelessWidget {
-  const TestPage({super.key});
+class WaterAbsorptionPage extends StatelessWidget {
+  const WaterAbsorptionPage({super.key});
 
   @override
   Widget build(BuildContext context) {

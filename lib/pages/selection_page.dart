@@ -1,5 +1,8 @@
 import 'package:calculator/pages/iec60332_3_22_24_page.dart';
 import 'package:calculator/pages/insulation_resistance_page.dart';
+import 'package:calculator/pages/loss_of_mass_page.dart';
+import 'package:calculator/pages/pressure_page.dart';
+import 'package:calculator/pages/water_absorption_page.dart';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 
@@ -26,14 +29,17 @@ class SelectionPage extends StatefulWidget {
 class _SelectionPageState extends State<SelectionPage> {
   // Map containing the title and the corresponding page widget for navigation
   final Map<String, Widget> _pages = {
-    'Shrinkage': const ShrinkagePage(),
     'Conductor Resistance': const ConductorResistancePage(),
     'Insulation Resistance': const InsulationResistancePage(),
+    'Tensile & Elongation': const AgeingPage(), 
     'Hot Set': const HotSetPage(),
+    'Shrinkage': const ShrinkagePage(),
     'Mutual Capacitance': const MutualCapacitancePage(), 
     'Capacitance Unbalance to Earth (Cu)': const CapacitanceUnbalancePage(), 
-    'Tensile Strength & Elongation (Ageing)': const AgeingPage(), 
     'IEC 60332-3-22/24': const IEC60332Page(),
+    'Pressure': const PressurePage(),
+    'Loss of Mass': const LossOfMassPage(),
+    'Water Absorption': const WaterAbsorptionPage()
   };
 
   // Map to store PDF paths associated with each page
@@ -47,7 +53,7 @@ class _SelectionPageState extends State<SelectionPage> {
     'Hot Set': 'images/pdfs/hot_set_dumbbell.pdf', 
     'Mutual Capacitance': 'images/pdfs/mutual_capacitance.pdf', 
     'Capacitance Unbalance to Earth (Cu)': 'images/pdfs/capacitance_unbalance.pdf', 
-    'Tensile Strength & Elongation (Ageing)': 'images/pdfs/ageing.pdf',
+    'Tensile & Elongation': 'images/pdfs/ageing.pdf',
   };
 
   // Map to track the expansion state of each item
@@ -505,9 +511,9 @@ class _SelectionPageState extends State<SelectionPage> {
       case 'Conductor Resistance': return 'images/conductor_resistance.png';
       case 'Insulation Resistance': return 'images/insulation_resistance.png';
       case 'Hot Set': return 'images/hot_set.png';
-      case 'Mutual Capacitance': return 'images/mutual_capacitance.png'; // Example
-      case 'Capacitance Unbalance to Earth (Cu)': return 'images/capacitance_unbalance.png'; // Example
-      case 'Tensile Strength & Elongation (Ageing)': return 'images/ageing.png'; // Example
+      case 'Mutual Capacitance': return 'images/capacitance.jpg'; 
+      case 'Capacitance Unbalance to Earth (Cu)': return 'images/capacitance_unbalance.png';
+      case 'Tensile & Elongation': return 'images/ageing.jpg'; 
       default: return 'images/default_image.png';
     }
   }
