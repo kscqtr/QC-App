@@ -51887,25 +51887,25 @@ A.akl.prototype={
 $1(a){return a instanceof A.q9||a instanceof A.qa},
 $S:11}
 A.akm.prototype={
-$2(a,b){var s,r,q,p,o,n,m,l,k,j,i,h=null,g=this.a,f=g.f[b]
-if(f==="SKIPPED")return new A.a7(B.n3,A.a8("Entry "+(b+1)+": Skipped",h,h,h,B.ec.S3(B.dn,B.k0),h,h),h)
-if(f instanceof A.q9){s=f.a
-r=f.b
-q=f.c
-p=f.d
-o=f.e
-n=f.r
-m=f.w
-l=f.x
-k=f.f}else if(f instanceof A.qa){s=f.a
-r=f.b
-q=f.c
-p=f.d
-o=f.e
-n=f.r
-m=f.w
-l=f.x
-k=f.f}else{s=""
+$2(a,b){var s,r,q,p,o,n,m,l,k,j,i,h,g,f=null,e=this.a,d=e.f[b]
+if(d==="SKIPPED")return new A.a7(B.n3,A.a8("Entry "+(b+1)+": Skipped",f,f,f,B.ec.S3(B.dn,B.k0),f,f),f)
+if(d instanceof A.q9){s=d.a
+r=d.b
+q=d.c
+p=d.d
+o=d.e
+n=d.r
+m=d.w
+l=d.x
+k=d.f}else if(d instanceof A.qa){s=d.a
+r=d.b
+q=d.c
+p=d.d
+o=d.e
+n=d.r
+m=d.w
+l=d.x
+k=d.f}else{s=""
 r=""
 q=""
 p=""
@@ -51913,12 +51913,16 @@ o=""
 n=""
 m=""
 k=""
-l=0}if(s.length!==0){j=this.b
-i=t.p
-i=A.b([A.a8("Conductor: ("+s+", "+r+")",h,h,h,B.aS.ly(15),h,h),new A.a7(B.Pg,A.b3(A.b([A.a8("Test Duration: "+q,h,h,h,j,h,h),A.a8("# Test Pieces: "+B.c.a4(l,1),h,h,h,j,h,h),A.a8("Formation: "+p,h,h,h,j,h,h),A.a8("Ladder: "+o,h,h,h,j,h,h),A.a8("Wire Size: "+n,h,h,h,j,h,h),A.a8("Burner: "+m,h,h,h,j,h,h),A.a8("Array: "+k,h,h,h,j,h,h)],i),B.ag,h,B.q,B.k),h)],i)
-g=g.f
-if(b<g.length-1&&A.eT(g,b+1,h,A.a3(g).c).d9(0,new A.akf()))i.push(B.NN)
-return new A.a7(B.jE,A.b3(i,B.ag,h,B.q,B.k),h)}return B.W},
+l=0}if(s.length!==0){j=A.a8("Conductor: ("+s+", "+r+")",f,f,f,B.aS.ly(15),f,f)
+i=this.b
+h=t.p
+g=A.b([A.a8("Test Duration: "+q,f,f,f,i,f,f),A.a8("# Test Pieces: "+B.c.a4(l,1),f,f,f,i,f,f),A.a8("Formation: "+p,f,f,f,i,f,f),A.a8("Ladder: "+o,f,f,f,i,f,f),A.a8("Wire Size: "+n,f,f,f,i,f,f),A.a8("Burner: "+m,f,f,f,i,f,f)],h)
+if(s==="\u2264 35mm\xb2")g.push(A.a8("Array: "+k,f,f,f,i,f,f))
+if(s==="\u2265 50mm\xb2")g.push(A.a8("Actual # Test Pieces: "+k,f,f,f,i,f,f))
+j=A.b([j,new A.a7(B.Pg,A.b3(g,B.ag,f,B.q,B.k),f)],h)
+e=e.f
+if(b<e.length-1&&A.eT(e,b+1,f,A.a3(e).c).d9(0,new A.akf()))j.push(B.NN)
+return new A.a7(B.jE,A.b3(j,B.ag,f,B.q,B.k),f)}return B.W},
 $S:103}
 A.akf.prototype={
 $1(a){return a!=null&&!J.e(a,"SKIPPED")},
