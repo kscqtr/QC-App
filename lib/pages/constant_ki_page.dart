@@ -216,7 +216,7 @@ class ConstantKiPageState extends State<ConstantKiPage> {
 
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Mutual Capacitance')),
+      appBar: AppBar(title: const Text('Constant Ki')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(

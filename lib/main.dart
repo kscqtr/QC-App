@@ -1,6 +1,6 @@
+import 'package:calculator/pages/login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart'; // Import Google Fonts
-import 'pages/selection_page.dart'; // Import the SelectionPage from the 'pages' folder
 
 void main() {
   runApp(const MyApp());
@@ -88,7 +88,7 @@ class MyApp extends StatelessWidget {
           contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         ),
       ),
-      home: const SelectionPage(),
+      home: const LoginScreen(),
     );
   }
 }
