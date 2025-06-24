@@ -47,7 +47,7 @@ class IEC22Results {
   final String volume;
   final double rawVolumeLM;
   final double totalTestPieces;
-  final bool isAdjusted; // <-- ADD THIS FLAG
+  final bool isAdjusted; 
 
   IEC22Results({
     required this.material,
@@ -56,7 +56,7 @@ class IEC22Results {
     required this.volume,
     required this.rawVolumeLM,
     required this.totalTestPieces,
-    required this.isAdjusted, // <-- ADD THIS
+    required this.isAdjusted, 
   });
 
   @override
@@ -73,7 +73,7 @@ class IEC24Results {
   final String volume;
   final double rawVolumeLM;
   final double totalTestPieces;
-  final bool isAdjusted; // <-- ADD THIS FLAG
+  final bool isAdjusted; 
 
   IEC24Results({
     required this.material,
@@ -82,7 +82,7 @@ class IEC24Results {
     required this.volume,
     required this.rawVolumeLM,
     required this.totalTestPieces,
-    required this.isAdjusted, // <-- ADD THIS
+    required this.isAdjusted, 
   });
 
   @override

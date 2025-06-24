@@ -12,7 +12,7 @@ class LoginScreen extends StatelessWidget {
   // Updated authentication function for login.
   Future<String?> _authUser(LoginData data) {
     debugPrint('Name: ${data.name}, Password: ${data.password}');
-    return Future.delayed(const Duration(milliseconds: 1500)).then((_) {
+    return Future.delayed(const Duration(milliseconds: 1000)).then((_) {
       // Check if the username and password are correct.
       if (data.name != _correctUsername || data.password != _correctPassword) {
         return 'Wrong username or password';
@@ -32,11 +32,14 @@ class LoginScreen extends StatelessWidget {
       theme: LoginTheme(
         pageColorLight: Colors.white,
         pageColorDark: Colors.white,
+        
       ),
       // This changes the hint text of the user input field to 'Username'.
       messages: LoginMessages(
         userHint: 'Username',
       ),
+      
+      disableCustomPageTransformer: true, // Disable custom page transformer for simplicity.
       // Provide custom validators to override the defaults.
       userValidator: (value) {
         if (value == null || value.isEmpty) {
