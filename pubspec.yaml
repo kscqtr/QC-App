@@ -82,6 +82,16 @@ flutter:
     - images/hot_set.png
     - images/ageing.jpg
     - images/capacitance.jpg
+    - images/ambient_temp.jpg
+    - images/constant_ki.jpg
+    - images/iec.jpg
+    - images/constant_ki.jpg
+    - images/loss_of_mass.jpg
+    - images/pressure.webp
+    - images/water_absorption.jpg
+
+    
+    
     
 
   # To add assets to your application, add an assets section, like this:

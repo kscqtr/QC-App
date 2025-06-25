@@ -254,11 +254,17 @@ class IEC60332Page2State extends State<IEC60332Page2> {
               actualTestPiece = ((600 - 20)/(diameterOD + 20)).ceilToDouble();
               determinedArray = actualTestPiece.toStringAsFixed(0);
               determinedBurner = "Double";
-            }   
+            }
 
             if (diameterOD > 50.0) {       // ≥ 50mm² & > 50.0mm
               determinedWireSizeDesc = "1.0 - 2.5 mm";
             }
+
+            if (actualTestPiece > testPieces) {
+              actualTestPiece = testPieces; // Ensure we don't exceed the test pieces
+              determinedArray = actualTestPiece.toStringAsFixed(0);
+            }   
+
           } else { // Diameter is <= 40.0
             determinedFormation = "Spacing"; 
             determinedLadder = "300mm";   
@@ -278,6 +284,12 @@ class IEC60332Page2State extends State<IEC60332Page2> {
             if (diameterOD > 50.0) {       // ≥ 50mm² & > 50.0mm
               determinedWireSizeDesc = "1.0 - 2.5 mm";
             }
+
+            if (actualTestPiece > testPieces) {
+              actualTestPiece = testPieces; // Ensure we don't exceed the test pieces
+              determinedArray = actualTestPiece.toStringAsFixed(0);
+            }   
+
           }
         } else {
            firstErrorMsg ??= "Unknown conductor type: $conductorKey (Entry ${i+1})";

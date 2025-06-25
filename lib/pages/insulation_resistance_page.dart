@@ -17,19 +17,16 @@ class _InsulationResistancePageState extends State<InsulationResistancePage> {
   // State for current index
   int _currentCarouselIndex = 0;
 
-  // --- REMOVED: Expansion State Map ---
-  // final Map<String, bool> _isExpanded = {};
-
   // Define the items list data
   final List<Map<String, dynamic>> _carouselItemsData = [
     {
       'title': 'Ambient Temperature',
-      'imagePath': 'images/hot_set_tubular.jpg',
+      'imagePath': 'images/ambient_temp.jpg',
       'pageBuilder': () => const AmbientTemperaturePage(),
     },
     {
       'title': 'Constant Ki',
-      'imagePath': 'images/hot_set_dumbbell.jpg',
+      'imagePath': 'images/constant_ki.jpg',
       'pageBuilder': () => const ConstantKiPage(),
     },
   ];

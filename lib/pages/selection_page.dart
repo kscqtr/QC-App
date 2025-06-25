@@ -442,21 +442,6 @@ class _SelectionPageState extends State<SelectionPage> {
                    child: Text(title, style: const TextStyle(fontSize: 16)),
                  ),
                ),
-               if (pdfAvailable)
-                 TextButton.icon(
-                   icon: Icon(
-                     isCurrentlyExpanded ? Icons.expand_less : Icons.expand_more,
-                     size: 20.0,
-                   ),
-                   label: const Text("More Info"),
-                   style: TextButton.styleFrom(
-                     foregroundColor: Colors.grey[700],
-                     padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                     textStyle: const TextStyle(fontSize: 14.0),
-                   ),
-                   onPressed: onExpandToggle,
-                 )
-               else
                  const SizedBox(height: 48.0), // Placeholder for consistent height
                Visibility(
                  visible: isCurrentlyExpanded && pdfAvailable,
@@ -514,6 +499,10 @@ class _SelectionPageState extends State<SelectionPage> {
       case 'Mutual Capacitance': return 'images/capacitance.jpg'; 
       case 'Capacitance Unbalance to Earth (Cu)': return 'images/capacitance_unbalance.png';
       case 'Tensile & Elongation': return 'images/ageing.jpg'; 
+      case 'IEC 60332-3-22/24': return 'images/iec.jpg'; 
+      case 'Pressure': return 'images/pressure.webp';
+      case 'Loss of Mass': return 'images/loss_of_mass.jpg';
+      case 'Water Absorption': return 'images/water_absorption.jpg';
       default: return 'images/default_image.png';
     }
   }

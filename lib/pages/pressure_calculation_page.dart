@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 
-class ConstantKiPage extends StatefulWidget {
-  const ConstantKiPage({super.key});
+class PressureCalculationPage extends StatefulWidget {
+  const PressureCalculationPage({super.key});
 
   @override
-  ConstantKiPageState createState() =>
-      ConstantKiPageState();
+  PressureCalculationPageState createState() =>
+      PressureCalculationPageState();
 }
 
-class ConstantKiPageState extends State<ConstantKiPage> {
+class PressureCalculationPageState extends State<PressureCalculationPage> {
   // Controllers for inputs
   final TextEditingController _lengthController = TextEditingController();
   final TextEditingController _insulationResistanceController = TextEditingController();
