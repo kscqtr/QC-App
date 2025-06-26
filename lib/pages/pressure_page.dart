@@ -21,12 +21,12 @@ class _PressurePageState extends State<PressurePage> {
   final List<Map<String, dynamic>> _carouselItemsData = [
     {
       'title': 'Weight',
-      'imagePath': 'images/ambient_temp.jpg',
+      'imagePath': 'images/',
       'pageBuilder': () => const PressureWeightPage(),
     },
     {
       'title': 'Calculation',
-      'imagePath': 'images/constant_ki.jpg',
+      'imagePath': 'images/',
       'pageBuilder': () => const PressureCalculationPage(),
     },
   ];
