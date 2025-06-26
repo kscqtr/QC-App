@@ -8506,7 +8506,7 @@ aC7:function aC7(a){this.a=a},
 aC6:function aC6(a,b){this.a=a
 this.b=b},
 bsz(){var s=t.N,r=t.z
-return new A.a9M(A.b([A.e(["title","Weight","imagePath","images/ambient_temp.jpg","pageBuilder",new A.aWj()],s,r),A.e(["title","Calculation","imagePath","images/constant_ki.jpg","pageBuilder",new A.aWk()],s,r)],t.H7))},
+return new A.a9M(A.b([A.e(["title","Weight","imagePath","images/","pageBuilder",new A.aWj()],s,r),A.e(["title","Calculation","imagePath","images/","pageBuilder",new A.aWk()],s,r)],t.H7))},
 KL:function KL(a){this.a=a},
 a9M:function a9M(a){var _=this
 _.d=0
