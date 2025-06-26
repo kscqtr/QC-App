@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:math';
+
 
 class PressureCalculationPage extends StatefulWidget {
   const PressureCalculationPage({super.key});
@@ -10,60 +10,46 @@ class PressureCalculationPage extends StatefulWidget {
 }
 
 class PressureCalculationPageState extends State<PressureCalculationPage> {
-  // Controllers for inputs
-  final TextEditingController _lengthController = TextEditingController();
-  final TextEditingController _insulationResistanceController = TextEditingController();
-  final TextEditingController _outerDiameterController = TextEditingController();
-  final TextEditingController _innerDiameterController = TextEditingController();
+  // --- MODIFIED: Controllers for new inputs ---
+  final TextEditingController _initialThicknessController = TextEditingController();
+  final TextEditingController _secondaryThicknessController = TextEditingController();
 
-  // State variables for dropdowns
-  String _selectedlengthUnit = 'cm';
-  String _selectedIRUnit = 'MΩ';
-  String _selectedOuterDiameterUnit = 'mm';
-  String _selectedInnerDiameterUnit = 'mm';
-
-  // State variables for results
-  String? _calculatedResultVolumeResistivity; // Stores "X nF/km"
-  String? _calculatedResultKi; // Stores "Y µs"
-  String? _calculationError; // Stores error messages
+  // --- MODIFIED: State variables for new logic ---
+  String _selectedThicknessType = 'Indented'; // Default selection
+  String? _calculatedResult;
+  String? _calculationError;
   bool _showResultTab = false;
 
   @override
   void dispose() {
-    _lengthController.dispose();
-    _insulationResistanceController.dispose();
-    _outerDiameterController.dispose();
-    _innerDiameterController.dispose();
+    _initialThicknessController.dispose();
+    _secondaryThicknessController.dispose();
     super.dispose();
   }
 
-  // Calculation Logic
+  // --- MODIFIED: Calculation Logic for new inputs and formulas ---
   void _performCalculations() {
     // Clear previous errors/results first
     setState(() {
-       _calculationError = null;
-       _calculatedResultVolumeResistivity = null;
-       _calculatedResultKi = null;
-       _showResultTab = false;
+      _calculationError = null;
+      _calculatedResult = null;
+      _showResultTab = false;
     });
 
-    // Parse inputs
-    double? lengthInput = double.tryParse(_lengthController.text);
-    double? insulationResistanceInput = double.tryParse(_insulationResistanceController.text);
-    double? outerDiameterInput = double.tryParse(_outerDiameterController.text);
-    double? innerDiameterInput = double.tryParse(_innerDiameterController.text);
+    // Parse new inputs
+    double? initialThickness = double.tryParse(_initialThicknessController.text);
+    double? secondaryThickness = double.tryParse(_secondaryThicknessController.text);
 
     // Validate ALL required inputs
     String? errorMsg;
-    if (lengthInput == null) {errorMsg = 'Invalid Length input.';}
-    else if (insulationResistanceInput == null) {errorMsg = 'Invalid Insulation Resistance input.';}
-    else if (outerDiameterInput == null) {errorMsg = 'Invalid Outer Diameter input.';}
-    else if (innerDiameterInput == null) {errorMsg = 'Invalid Inner Diameter input.';}
-    else if (outerDiameterInput <= 0) {errorMsg = 'Outer Diameter must be positive.';}
-    else if (innerDiameterInput <= 0) {errorMsg = 'Inner Diameter must be positive.';}
-    else if (lengthInput < 0) {errorMsg = 'Length cannot be negative.';}
-    else if (insulationResistanceInput < 0) {errorMsg = 'Insulation Resistance cannot be negative.';}
-
+    if (initialThickness == null) {errorMsg = 'Invalid Initial Thickness input.';}
+    else if (secondaryThickness == null) {errorMsg = 'Invalid Thickness input.';}
+    else if (initialThickness < 0) {errorMsg = 'Initial Thickness cannot be negative.';}
+    else if (secondaryThickness < 0) {errorMsg = 'Thickness cannot be negative.';}
+    // Specific validation based on selected type
+    else if (_selectedThicknessType == 'Indented' && initialThickness == 0) {
+      errorMsg = 'Initial Thickness cannot be zero for Indented calculation.';
+    }
 
     if (errorMsg != null) {
       setState(() { _calculationError = errorMsg; _showResultTab = true; });
@@ -71,58 +57,70 @@ class PressureCalculationPageState extends State<PressureCalculationPage> {
       return;
     }
 
-
-    // Unit Conversions (safe ! because null checks passed)
-    double innerDiameter = innerDiameterInput!;
-    double length = lengthInput!;
-    double insulationResistance = (_selectedIRUnit == 'GΩ') ? insulationResistanceInput! * 1e9 : (insulationResistanceInput!) * 1e6; // Convert MΩ to Ω or GΩ to Ω
-    double outerDiameter = outerDiameterInput!;
-
-    // Calculations
-    double volumeResistivity = (2 * 3.1416 * length * insulationResistance) / log(outerDiameter/innerDiameter); 
-    double ki = (1e-11 * 0.367 * volumeResistivity); 
+    // Perform calculation based on selected type
+    double indentation = 0;
+    if (_selectedThicknessType == 'Indented') {
+      // Indentation = (Indented thickness / Initial thickness) * 100
+      indentation = (secondaryThickness! / initialThickness!) * 100;
+    } else { // 'Balance'
+      // Indentation = (Initial thickness - balance thickness) * 100
+      indentation = (initialThickness! - secondaryThickness!) * 100;
+    }
 
     setState(() {
-      // First, convert the number to exponential notation (e.g., 1e+9)
-      String exponentialNotation = volumeResistivity.toStringAsExponential(3); // 0 for precision
-
-      // Then, replace 'e+' with 'x 10^' to get the desired format
-      String formattedResult = exponentialNotation.replaceAll('e+', ' x 10^');
-
-      // Finally, assign it to your variable with the unit
-      _calculatedResultVolumeResistivity = '$formattedResult Ω.cm';
-      
-      // For Ki, format to 3 decimal places with unit
-      _calculatedResultKi = '${ki.toStringAsFixed(3)} MΩ.km';
+      _calculatedResult = '${indentation.toStringAsFixed(2)}%';
       _showResultTab = true;
     });
-     FocusScope.of(context).unfocus();
+      FocusScope.of(context).unfocus();
   }
 
-  // Reset Logic
+  // --- MODIFIED: Reset Logic for new inputs ---
   void _resetFields() {
     setState(() {
-      _lengthController.clear();
-      _insulationResistanceController.clear();
-      _outerDiameterController.clear();
-      _innerDiameterController.clear();
-      _selectedIRUnit = 'MΩ';
-      _calculatedResultVolumeResistivity = null;
-      _calculatedResultKi = null;
+      _initialThicknessController.clear();
+      _secondaryThicknessController.clear();
+      _selectedThicknessType = 'Indented'; // Reset to default
+      _calculatedResult = null;
       _calculationError = null;
       _showResultTab = false;
     });
   }
 
-  // Helper to build input rows
-  Widget _buildInputRow({
+  // Helper for a simple input row
+  Widget _buildSimpleInputRow({
       required String label,
       required TextEditingController controller,
-      required String selectedUnit,
-      required List<String> unitOptions,
-      required ValueChanged<String?> onUnitChanged,
       double fieldWidth = 150,
-      double unitWidth = 80,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: SizedBox(
+        width: fieldWidth,
+        child: TextField(
+          controller: controller,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          style: const TextStyle(fontSize: 15.0),
+          decoration: InputDecoration(
+            labelText: label,
+            labelStyle: const TextStyle(fontSize: 15.0),
+            border: const OutlineInputBorder(),
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+          ),
+          onChanged: (value) => setState(() => _showResultTab = false),
+        ),
+      ),
+    );
+  }
+
+  // --- NEW: Helper for an input row with a dropdown on the left ---
+  Widget _buildInputRowWithLeftDropdown({
+    required String selectedType,
+    required List<String> typeOptions,
+    required ValueChanged<String?> onTypeChanged,
+    required TextEditingController controller,
+    double fieldWidth = 110,
+    double unitWidth = 110,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -131,36 +129,19 @@ class PressureCalculationPageState extends State<PressureCalculationPage> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           SizedBox(
-            width: fieldWidth,
-            child: TextField(
-              controller: controller,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              style: const TextStyle(fontSize: 15.0),
-              decoration: InputDecoration(
-                labelText: label,
-                labelStyle: const TextStyle(fontSize: 15.0),
-                border: const OutlineInputBorder(),
-                isDense: true,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-              ),
-              onChanged: (value) => setState(() => _showResultTab = false),
-            ),
-          ),
-          const SizedBox(width: 10),
-          SizedBox(
             width: unitWidth,
             child: DropdownButtonFormField<String>(
               decoration: const InputDecoration(
-                 border: OutlineInputBorder(),
-                 isDense: true,
-                 contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-               ),
-              value: selectedUnit,
+                border: OutlineInputBorder(),
+                isDense: true,
+                contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+              ),
+              value: selectedType,
               onChanged: (val) {
-                  onUnitChanged(val);
-                  setState(() => _showResultTab = false);
+                onTypeChanged(val);
+                setState(() => _showResultTab = false);
               },
-              items: unitOptions.map<DropdownMenuItem<String>>((String value) {
+              items: typeOptions.map<DropdownMenuItem<String>>((String value) {
                 return DropdownMenuItem<String>(
                   value: value,
                   child: Text(value, style: const TextStyle(fontSize: 15.0)),
@@ -168,51 +149,27 @@ class PressureCalculationPageState extends State<PressureCalculationPage> {
               }).toList(),
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-   // Helper to build input rows
-  Widget _buildInputRowNoDropbox({
-      required String label,
-      required TextEditingController controller,
-      required String selectedUnit,
-      required ValueChanged<String?> onUnitChanged,
-      double fieldWidth = 150,
-      double unitWidth = 80,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
+          const SizedBox(width: 10),
           SizedBox(
             width: fieldWidth,
             child: TextField(
               controller: controller,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               style: const TextStyle(fontSize: 15.0),
-              decoration: InputDecoration(
-                labelText: label,
-                labelStyle: const TextStyle(fontSize: 15.0),
-                border: const OutlineInputBorder(),
+              decoration: const InputDecoration(
+                labelText: 'Thickness:',
+                labelStyle: TextStyle(fontSize: 15.0),
+                border: OutlineInputBorder(),
                 isDense: true,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
               ),
               onChanged: (value) => setState(() => _showResultTab = false),
             ),
-          ),
-          const SizedBox(width: 10),
-          SizedBox(
-            width: unitWidth,
           ),
         ],
       ),
     );
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -222,11 +179,10 @@ class PressureCalculationPageState extends State<PressureCalculationPage> {
     final errorStyle = boldStyle.copyWith(color: Colors.red, fontSize: 16);
     final resultValueStyle = normalStyle.copyWith(fontSize: 14);
 
-
     return Scaffold(
-      appBar: AppBar(title: const Text('Constant Ki')),
+      appBar: AppBar(title: const Text('Pressure: Calculation')),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(1.0),
         child: SingleChildScrollView(
           child: Center(
             child: Column(
@@ -234,11 +190,14 @@ class PressureCalculationPageState extends State<PressureCalculationPage> {
               children: [
                 const SizedBox(height: 20),
 
-                // Input Fields
-                _buildInputRowNoDropbox(label: 'Cable length:', controller: _lengthController, selectedUnit: _selectedlengthUnit, onUnitChanged: (val) => _selectedlengthUnit = val!),
-                _buildInputRow(label: 'Resistance:', controller: _insulationResistanceController, selectedUnit: _selectedIRUnit, unitOptions: const ['MΩ', 'GΩ'], onUnitChanged: (val) => _selectedIRUnit = val!),
-                _buildInputRowNoDropbox(label: 'Outer Diameter:', controller: _outerDiameterController, selectedUnit: _selectedOuterDiameterUnit, onUnitChanged: (val) => _selectedOuterDiameterUnit = val!),
-                _buildInputRowNoDropbox(label: 'Inner Diameter:', controller: _innerDiameterController, selectedUnit: _selectedInnerDiameterUnit, onUnitChanged: (val) => _selectedInnerDiameterUnit = val!),
+                // --- MODIFIED: Input Fields ---
+                _buildSimpleInputRow(label: 'Initial thickness:', controller: _initialThicknessController),
+                _buildInputRowWithLeftDropdown(
+                  selectedType: _selectedThicknessType,
+                  typeOptions: const ['Indented', 'Balance'],
+                  onTypeChanged: (val) => setState(() => _selectedThicknessType = val!),
+                  controller: _secondaryThicknessController
+                ),
 
                 const SizedBox(height: 30),
 
@@ -253,7 +212,7 @@ class PressureCalculationPageState extends State<PressureCalculationPage> {
                 ),
                 const SizedBox(height: 30),
 
-                // --- MODIFIED Result Section with Formulas (using Text widgets) ---
+                // --- MODIFIED: Result Section ---
                 AnimatedOpacity(
                   opacity: _showResultTab ? 1.0 : 0.0,
                   duration: const Duration(milliseconds: 300),
@@ -274,17 +233,14 @@ class PressureCalculationPageState extends State<PressureCalculationPage> {
                                 Text(_calculationError!, style: errorStyle)
                               // Show Results if no error
                               else ...[
-                                // Capacitance Result Block
-                                const Text('P, Volume resistivity', style: boldStyle),
-                                Text('  Formula: 2 * 3.1416 * L * IR', style: resultValueStyle),
-                                Text('  Calculated: ${_calculatedResultVolumeResistivity ?? '...'}', style: resultValueStyle),
-                                const SizedBox(height: 10),
-                                const Divider(height: 25, thickness: 1),
-
-                                // L/R Result Block
-                                const Text('Ki', style: boldStyle),
-                                Text('  Formula: 10⁻¹¹ * 0.367 * P', style: resultValueStyle),
-                                Text('  Calculated: ${_calculatedResultKi ?? '...'}', style: resultValueStyle),
+                                const Text('Indentation', style: boldStyle),
+                                Text(
+                                  _selectedThicknessType == 'Indented'
+                                      ? '  Formula: (Indented / Initial) * 100'
+                                      : '  Formula: (Initial - Balance) * 100',
+                                  style: resultValueStyle,
+                                ),
+                                Text('  Calculated: ${_calculatedResult ?? '...'}', style: resultValueStyle),
                                 const SizedBox(height: 10),
                               ]
                             ],
@@ -292,7 +248,7 @@ class PressureCalculationPageState extends State<PressureCalculationPage> {
                         )
                       : const SizedBox.shrink(),
                 ),
-                 const SizedBox(height: 20), // Bottom padding
+                  const SizedBox(height: 20), // Bottom padding
               ],
             ),
           ),

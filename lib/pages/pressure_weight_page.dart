@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math';
 
 class PressureWeightPage extends StatefulWidget {
   const PressureWeightPage({super.key});
@@ -25,6 +26,11 @@ class PressureWeightPageState extends State<PressureWeightPage> {
   String? _calculatedResultGram; // Stores "Y g"
   String? _calculationError; // Stores error messages
   bool _showResultTab = false;
+  double? _currentKValue;
+
+  final Map<String, double> _kValueData = {
+  '0.6 (< 15mm)': 0.6, '0.7 (≥ 15mm)': 0.7, '1.0 (Ei5)': 1.0,
+  };
 
   @override
   void dispose() {
@@ -49,10 +55,11 @@ class PressureWeightPageState extends State<PressureWeightPage> {
 
     // Validate ALL required inputs
     String? errorMsg;
-    if (odInput == null) {errorMsg = 'Invalid Length input.';}
-    else if (thicknessInput == null) {errorMsg = 'Invalid Insulation Resistance input.';}
-    else if (odInput < 0) {errorMsg = 'Length cannot be negative.';}
-    else if (thicknessInput < 0) {errorMsg = 'Insulation Resistance cannot be negative.';}
+    if (odInput == null) {errorMsg = 'Invalid Overall Diameter input.';}
+    else if (thicknessInput == null) {errorMsg = 'Invalid Thickness input.';}
+    else if (odInput < 0) {errorMsg = 'Overall Diameter cannot be negative.';}
+    else if (thicknessInput < 0) {errorMsg = 'Thickness cannot be negative.';}
+    else if (_selectedKValueUnit == null) {errorMsg = 'Please select K Value.';}
 
 
     if (errorMsg != null) {
@@ -61,15 +68,18 @@ class PressureWeightPageState extends State<PressureWeightPage> {
       return;
     }
 
-
+    _currentKValue = _kValueData[_selectedKValueUnit!];
+    
     // Unit Conversions (safe ! because null checks passed)
     double diameter = odInput!;
-    double thickness = (_selectedThicknessUnit == 'GΩ') ? thicknessInput! * 1e9 : (thicknessInput!) * 1e6; // Convert MΩ to Ω or GΩ to Ω
+    double thickness = thicknessInput!;
 
     // Calculations
-    double newton = (2 * 3.1416 * diameter * thickness);
-    double gram = (1e-11 * 0.367 * newton); 
-    _calculatedResultGram = '${gram.toStringAsFixed(3)} MΩ.km';
+    double newton = (_currentKValue! * sqrt(2 * diameter * thickness - (thickness * thickness))); // P = K * sqrt(2 * D * T - T²)
+    double gram = ((newton / 9.81) * 1000); // Convert N to g (1 N = 1000 g / 9.81 m/s²)
+    _calculatedResultNewton = '${newton.toStringAsFixed(4)} N';
+    _calculatedResultGram = '${gram.toStringAsFixed(2)} g';
+
 
     setState(() {
       _showResultTab = true;
@@ -82,7 +92,6 @@ class PressureWeightPageState extends State<PressureWeightPage> {
     setState(() {
       _overallDiameterController.clear();
       _thicknessController.clear();
-      _selectedThicknessUnit = 'MΩ';
       _calculatedResultNewton = null;
       _calculatedResultGram = null;
       _calculationError = null;
@@ -230,15 +239,15 @@ class PressureWeightPageState extends State<PressureWeightPage> {
                               // Show Results if no error
                               else ...[
                                 // Capacitance Result Block
-                                const Text('P, Volume resistivity', style: boldStyle),
-                                Text('  Formula: 2 * 3.1416 * L * IR', style: resultValueStyle),
+                                const Text('N, Newton', style: boldStyle),
+                                Text('  Formula: K * √(2 * OD * T - T²)', style: resultValueStyle),
                                 Text('  Calculated: ${_calculatedResultNewton ?? '...'}', style: resultValueStyle),
                                 const SizedBox(height: 10),
                                 const Divider(height: 25, thickness: 1),
 
                                 // L/R Result Block
-                                const Text('Ki', style: boldStyle),
-                                Text('  Formula: 10⁻¹¹ * 0.367 * P', style: resultValueStyle),
+                                const Text('g, Gram', style: boldStyle),
+                                Text('  Formula: N / 9.81 * 1000', style: resultValueStyle),
                                 Text('  Calculated: ${_calculatedResultGram ?? '...'}', style: resultValueStyle),
                                 const SizedBox(height: 10),
                               ]

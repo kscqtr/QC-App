@@ -496,8 +496,8 @@ class _SelectionPageState extends State<SelectionPage> {
       case 'Conductor Resistance': return 'images/conductor_resistance.png';
       case 'Insulation Resistance': return 'images/insulation_resistance.png';
       case 'Hot Set': return 'images/hot_set.png';
-      case 'Mutual Capacitance': return 'images/capacitance.jpg'; 
-      case 'Capacitance Unbalance to Earth (Cu)': return 'images/capacitance_unbalance.png';
+      case 'Mutual Capacitance': return 'images/mutual_capacitance.png'; 
+      case 'Capacitance Unbalance to Earth (Cu)': return 'images/capacitance_unbalance.jpg';
       case 'Tensile & Elongation': return 'images/ageing.jpg'; 
       case 'IEC 60332-3-22/24': return 'images/iec.jpg'; 
       case 'Pressure': return 'images/pressure.webp';

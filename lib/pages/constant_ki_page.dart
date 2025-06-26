@@ -121,7 +121,7 @@ class ConstantKiPageState extends State<ConstantKiPage> {
       required String selectedUnit,
       required List<String> unitOptions,
       required ValueChanged<String?> onUnitChanged,
-      double fieldWidth = 150,
+      double fieldWidth = 190,
       double unitWidth = 80,
   }) {
     return Padding(
@@ -179,7 +179,7 @@ class ConstantKiPageState extends State<ConstantKiPage> {
       required TextEditingController controller,
       required String selectedUnit,
       required ValueChanged<String?> onUnitChanged,
-      double fieldWidth = 150,
+      double fieldWidth = 190,
       double unitWidth = 80,
   }) {
     return Padding(
@@ -235,10 +235,10 @@ class ConstantKiPageState extends State<ConstantKiPage> {
                 const SizedBox(height: 20),
 
                 // Input Fields
-                _buildInputRowNoDropbox(label: 'Cable length:', controller: _lengthController, selectedUnit: _selectedlengthUnit, onUnitChanged: (val) => _selectedlengthUnit = val!),
-                _buildInputRow(label: 'Resistance:', controller: _insulationResistanceController, selectedUnit: _selectedIRUnit, unitOptions: const ['MΩ', 'GΩ'], onUnitChanged: (val) => _selectedIRUnit = val!),
-                _buildInputRowNoDropbox(label: 'Outer Diameter:', controller: _outerDiameterController, selectedUnit: _selectedOuterDiameterUnit, onUnitChanged: (val) => _selectedOuterDiameterUnit = val!),
-                _buildInputRowNoDropbox(label: 'Inner Diameter:', controller: _innerDiameterController, selectedUnit: _selectedInnerDiameterUnit, onUnitChanged: (val) => _selectedInnerDiameterUnit = val!),
+                _buildInputRowNoDropbox(label: 'CM in water:', controller: _lengthController, selectedUnit: _selectedlengthUnit, onUnitChanged: (val) => _selectedlengthUnit = val!),
+                _buildInputRow(label: 'Measured Resistance:', controller: _insulationResistanceController, selectedUnit: _selectedIRUnit, unitOptions: const ['MΩ', 'GΩ'], onUnitChanged: (val) => _selectedIRUnit = val!),
+                _buildInputRowNoDropbox(label: 'Outer Diameter (mm):', controller: _outerDiameterController, selectedUnit: _selectedOuterDiameterUnit, onUnitChanged: (val) => _selectedOuterDiameterUnit = val!),
+                _buildInputRowNoDropbox(label: 'Inner Diameter (mm):', controller: _innerDiameterController, selectedUnit: _selectedInnerDiameterUnit, onUnitChanged: (val) => _selectedInnerDiameterUnit = val!),
 
                 const SizedBox(height: 30),
 

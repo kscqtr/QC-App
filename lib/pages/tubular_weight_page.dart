@@ -180,8 +180,8 @@ class _TubularWeightPageState extends State<TubularWeightPage> {
 
          // Store results
          _rowResults[i] = [
-           'Area: (${dValue.toStringAsFixed(2)} - ${tValue.toStringAsFixed(2)}) x ${tValue.toStringAsFixed(2)} x 3.1416 = ${area.toStringAsFixed(3)} mm²',
-           'Mass: ${area.toStringAsFixed(3)} mm² x 20.387 = ${weight.toStringAsFixed(3)} g'
+           'Area: (${dValue.toStringAsFixed(2)} - ${tValue.toStringAsFixed(2)}) x ${tValue.toStringAsFixed(2)} x 3.1416 = ${area.toStringAsFixed(2)} mm²',
+           'Mass: ${area.toStringAsFixed(3)} mm² x 20.387 = ${weight.toStringAsFixed(2)} g'
          ];
      }
     });

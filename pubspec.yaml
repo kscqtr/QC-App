@@ -81,7 +81,8 @@ flutter:
     - images/pdfs/hot_set_dumbbell.pdf
     - images/hot_set.png
     - images/ageing.jpg
-    - images/capacitance.jpg
+    - images/capacitance_unbalance.jpg
+    - images/mutual_capacitance.png
     - images/ambient_temp.jpg
     - images/constant_ki.jpg
     - images/iec.jpg
