@@ -54,7 +54,6 @@ class _InsulationResistancePageState extends State<InsulationResistancePage> {
     // Determine indicator color based on theme
     final Color indicatorColor = Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black;
 
-    // --- REMOVED: Dynamic Height Calculation ---
 
     return Scaffold(
       appBar: AppBar(

@@ -232,7 +232,82 @@ class _SelectionPageState extends State<SelectionPage> {
                 ),
               ],
             ),
-            // --- End of Modification ---
+
+            ExpansionTile(
+              leading: const Icon(Icons.question_answer_outlined),
+              title: const Text('More Information'),
+              children: <Widget>[
+                // All items are now directly under the main expansion tile
+                ListTile(
+                  contentPadding: const EdgeInsets.only(left: 32.0),
+                  leading: const Icon(Icons.cable, size: 22),
+                  title: const Text('Conductor Resistance'),
+                  onTap: () {
+                    Navigator.pop(context); // Close drawer
+                    _openPdf('Conductor Resistance');
+                  },
+                ),
+                ListTile(
+                  contentPadding: const EdgeInsets.only(left: 32.0),
+                  leading: const Icon(Icons.shield, size: 22),
+                  title: const Text('Insulation Resistance'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _openPdf('Insulation Resistance');
+                  },
+                ),
+                ListTile(
+                  contentPadding: const EdgeInsets.only(left: 32.0),
+                  leading: const Icon(Icons.compare_arrows, size: 22),
+                  title: const Text('Mutual Capacitance'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _openPdf('Mutual Capacitance');
+                  },
+                ),
+                ListTile(
+                  contentPadding: const EdgeInsets.only(left: 32.0),
+                  leading: const Icon(Icons.electrical_services, size: 22),
+                  title: const Text('Capacitance Unbalance'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    // Using the full key name as provided in your list
+                    _openPdf('Capacitance Unbalance to Earth (Cu)');
+                  },
+                ),
+                ListTile(
+                  contentPadding: const EdgeInsets.only(left: 32.0),
+                  leading: const Icon(Icons.straighten, size: 22),
+                  title: const Text('Tensile & Elongation'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _openPdf('Tensile & Elongation');
+                  },
+                ),
+                ListTile(
+                  contentPadding: const EdgeInsets.only(left: 32.0),
+                  leading: const Icon(Icons.whatshot, size: 22),
+                  title: const Text('Hot Set'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _openPdf('Hot Set');
+                  },
+                ),
+                ListTile(
+                  contentPadding: const EdgeInsets.only(left: 32.0),
+                  leading: const Icon(Icons.compress, size: 22),
+                  title: const Text('Shrinkage'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _openPdf('Shrinkage');
+                  },
+                ),
+              ],
+            ),
+
+
+            
+            
             ListTile(
               leading: const Icon(Icons.calculate_outlined),
               title: const Text('Calculator'),

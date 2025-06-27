@@ -27,19 +27,28 @@ class AmbientTemperaturePageState extends State<AmbientTemperaturePage> {
   // Maps use String keys, added "None"
   final Map<String, double> _pvcTemperatureFactors = {
     "None": 1.0, // K=1 for "None"
-    "23.0": 1.390, "23.5": 1.470, "24.0": 1.550, "24.5": 1.645, "25.0": 1.740,
-    "25.5": 1.850, "26.0": 1.960, "26.5": 2.090, "27.0": 2.220, "27.5": 2.370,
-    "28.0": 2.520, "28.5": 2.695, "29.0": 2.870, "29.5": 3.060, "30.0": 3.250,
-    "30.5": 3.500, "31.0": 3.750, "31.5": 4.000, "32.0": 4.250, "32.5": 4.575,
-    "33.0": 4.900, "33.5": 5.250, "34.0": 5.600, "34.5": 6.025, "35.0": 6.450
+    "23.0°C": 1.390, "23.5°C": 1.470, "24.0°C": 1.550, "24.5°C": 1.645, "25.0°C": 1.740,
+    "25.5°C": 1.850, "26.0°C": 1.960, "26.5°C": 2.090, "27.0°C": 2.220, "27.5°C": 2.370,
+    "28.0°C": 2.520, "28.5°C": 2.695, "29.0°C": 2.870, "29.5°C": 3.060, "30.0°C": 3.250,
+    "30.5°C": 3.500, "31.0°C": 3.750, "31.5°C": 4.000, "32.0°C": 4.250, "32.5°C": 4.575,
+    "33.0°C": 4.900, "33.5°C": 5.250, "34.0°C": 5.600, "34.5°C": 6.025, "35.0°C": 6.450
   };
 
   final Map<String, double> _eprTemperatureFactors = {
     "None": 1.0, // K=1 for "None"
-    "25.0": 1.35, "25.5": 1.40, "26.0": 1.44, "26.5": 1.49, "27.0": 1.54,
-    "27.5": 1.60, "28.0": 1.65, "28.5": 1.71, "29.0": 1.77, "29.5": 1.84,
-    "30.0": 1.90, "30.5": 1.97, "31.0": 2.04, "31.5": 2.12, "32.0": 2.20,
-    "32.5": 2.29, "33.0": 2.37
+    "25.0°C": 1.35, "25.5°C": 1.40, "26.0°C": 1.44, "26.5°C": 1.49, "27.0°C": 1.54,
+    "27.5°C": 1.60, "28.0°C": 1.65, "28.5°C": 1.71, "29.0°C": 1.77, "29.5°C": 1.84,
+    "30.0°C": 1.90, "30.5°C": 1.97, "31.0°C": 2.04, "31.5°C": 2.12, "32.0°C": 2.20,
+    "32.5°C": 2.29, "33.0°C": 2.37
+  };
+
+    final Map<String, double> _xlpeTemperatureFactors = {
+    "0°C": 0.10, "1°C": 0.12, "2°C": 0.13, "3°C": 0.14, "4°C": 0.16, "5°C": 0.18,
+    "6°C": 0.20, "7°C": 0.22, "8°C": 0.25, "9°C": 0.28, "10°C": 0.32, "11°C": 0.36,
+    "12°C": 0.40, "13°C": 0.45, "14°C": 0.51, "15°C": 0.57, "16°C": 0.63, "17°C": 0.70,
+    "18°C": 0.79, "19°C": 0.90, "20°C": 1.00, "21°C": 1.20, "22°C": 1.30, "23°C": 1.40,
+    "24°C": 1.60, "25°C": 1.80, "26°C": 2.00, "27°C": 2.20, "28°C": 2.50, "29°C": 2.80,
+    "30°C": 3.20, "31°C": 3.60, "32°C": 4.00, "33°C": 4.50, "34°C": 5.10, "35°C": 5.70
   };
 
   Map<String, double> _activeTemperatureMap = {};
@@ -222,7 +231,7 @@ class AmbientTemperaturePageState extends State<AmbientTemperaturePage> {
                       _buildDropdownRow(
                         hint: 'Select Material Type',
                         selectedValue: _selectedMaterial,
-                        options: const ['PVC', 'EPR'],
+                        options: const ['PVC', 'EPR', 'XLPE'],
                         onChanged: (String? newValue) {
                            setState(() {
                              _selectedMaterial = newValue!;
@@ -230,7 +239,9 @@ class AmbientTemperaturePageState extends State<AmbientTemperaturePage> {
                              _kFactor = null;
                              if (_selectedMaterial == 'PVC') {_activeTemperatureMap = _pvcTemperatureFactors;}
                              else if (_selectedMaterial == 'EPR') {_activeTemperatureMap = _eprTemperatureFactors;}
+                             else if (_selectedMaterial == 'XLPE') {_activeTemperatureMap = _xlpeTemperatureFactors;}
                              else {_activeTemperatureMap = {};}
+
                              _showCalculationTab = false;
                            });
                         },
@@ -336,7 +347,7 @@ class AmbientTemperaturePageState extends State<AmbientTemperaturePage> {
                               Text(
                                 _selectedTemperatureKey == "None"
                                  ? 'K = Not Applied (Temp: None)'
-                                 : 'K = ${_kFactor?.toStringAsFixed(4) ?? 'N/A'} (at $_selectedTemperatureKey °C for $_selectedMaterial)',
+                                 : 'K = ${_kFactor?.toStringAsFixed(4) ?? 'N/A'} (at $_selectedTemperatureKey for $_selectedMaterial)',
                                 style: const TextStyle(fontSize: 15),
                               ),
                               const Divider(height: 15, thickness: 1),
