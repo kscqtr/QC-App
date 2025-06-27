@@ -261,7 +261,6 @@ class _WaterAbsorptionPageState extends State<WaterAbsorptionPage> {
                 ),
               ),
             ),
-             // --- REMOVED Expansion Toggle and Content ---
           ],
         ),
       ),

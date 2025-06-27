@@ -13,7 +13,7 @@ import 'hot_set_page.dart';
 import 'calculator_page.dart'; // General calculator
 import 'mutual_capacitance_page.dart'; // For drawer
 import 'capacitance_unbalance_page.dart'; // For drawer
-import 'ageing_page.dart'; // For drawer
+import 'tensile_page.dart'; // For drawer
 
 
 // Import the PDF Viewer Page
