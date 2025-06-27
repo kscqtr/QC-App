@@ -111,7 +111,7 @@ class _SelectionPageState extends State<SelectionPage> {
     return Scaffold(
       appBar: AppBar(
         leading: Builder(
-           builder: (context) => IconButton(
+            builder: (context) => IconButton(
               icon: const Icon(Icons.menu),
               tooltip: 'Open Tools Menu',
               onPressed: () {
@@ -324,8 +324,8 @@ class _SelectionPageState extends State<SelectionPage> {
               leading: const Icon(Icons.info_outline),
               title: const Text('About'),
               onTap: () {
-                 Navigator.pop(context);
-                 showAboutDialog(context: context, applicationName: 'Keystone App', applicationVersion: '25.05.23'); // User updated version
+                  Navigator.pop(context);
+                  showAboutDialog(context: context, applicationName: 'Keystone App', applicationVersion: '25.05.23'); // User updated version
               },
             ),
           ],
@@ -438,6 +438,7 @@ class _SelectionPageState extends State<SelectionPage> {
     );
   }
 
+  // --- MODIFIED WIDGET ---
   Widget _buildCarouselItem(
     BuildContext context,
     String title,
@@ -446,123 +447,123 @@ class _SelectionPageState extends State<SelectionPage> {
     String? pdfPath,
     VoidCallback onExpandToggle,
   ) {
-     final imagePath = _getImagePathForPage(title);
-     final image = Image.asset(
-       imagePath,
-       fit: BoxFit.cover,
-       errorBuilder: (context, error, stackTrace) {
-         return Container(
-           color: Colors.grey[300],
-           child: Center(
-             child: Icon(Icons.image_not_supported, size: 50, color: Colors.grey[600]),
-           ),
-         );
-       },
-     );
+    final imagePath = _getImagePathForPage(title);
+    final image = Image.asset(
+      imagePath,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) {
+        return Container(
+          color: Colors.grey[300],
+          child: Center(
+            child: Icon(Icons.image_not_supported, size: 50, color: Colors.grey[600]),
+          ),
+        );
+      },
+    );
 
-     final bool pdfAvailable = pdfPath != null && pdfPath.isNotEmpty;
+    final bool pdfAvailable = pdfPath != null && pdfPath.isNotEmpty;
 
-     return Container(
-       margin: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
-       decoration: BoxDecoration(
-         borderRadius: BorderRadius.circular(15.0),
-         color: Colors.white,
-         boxShadow: [
-           BoxShadow(
-             color: Colors.grey.withAlpha(77),
-             spreadRadius: 1,
-             blurRadius: 5,
-             offset: const Offset(0, 3),
-           ),
-         ],
-       ),
-       child: ClipRRect(
+    // The entire card is now wrapped in GestureDetector to make it tappable
+    return GestureDetector(
+      onTap: () {
+        // This is the navigation logic that runs when any part of the card is tapped
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => pageWidget),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(15.0),
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withAlpha(77),
+              spreadRadius: 1,
+              blurRadius: 5,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: ClipRRect(
           borderRadius: BorderRadius.circular(15.0),
           child: Column(
-             mainAxisSize: MainAxisSize.min,
-             mainAxisAlignment: MainAxisAlignment.start,
-             children: <Widget>[
-               SizedBox(
-                 height: 275,
-                 width: double.infinity,
-                 child: image,
-               ),
-               Padding(
-                 padding: const EdgeInsets.only(top: 15.0, left: 30.0, right: 30.0),
-                 child: ElevatedButton(
-                   style: ElevatedButton.styleFrom(
-                     minimumSize: const Size(double.infinity, 45),
-                     shape: RoundedRectangleBorder(
-                       borderRadius: BorderRadius.circular(8.0),
-                     ),
-                   ),
-                   onPressed: () {
-                     if (isCurrentlyExpanded) {
-                        onExpandToggle();
-                        Future.delayed(const Duration(milliseconds: 0), () {
-                          if (context.mounted) {
-                             Navigator.push(
-                               context,
-                               MaterialPageRoute(builder: (context) => pageWidget),
-                             );
-                          }
-                        });
-                     } else {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => pageWidget),
-                        );
-                     }
-                   },
-                   child: Text(title, style: const TextStyle(fontSize: 16)),
-                 ),
-               ),
-                 const SizedBox(height: 48.0), // Placeholder for consistent height
-               Visibility(
-                 visible: isCurrentlyExpanded && pdfAvailable,
-                 maintainAnimation: true,
-                 maintainState: true,
-                 child: AnimatedOpacity(
-                    duration: const Duration(milliseconds: 0),
-                    opacity: isCurrentlyExpanded ? 1.0 : 0.0,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 60.0, right: 60.0, bottom: 15.0, top: 5),
-                      child: OutlinedButton.icon(
-                        icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
-                        label: const Text("View PDF"),
-                        style: OutlinedButton.styleFrom(
-                           foregroundColor: Colors.deepPurple,
-                           maximumSize: const Size(double.infinity, 40),
-                           shape: RoundedRectangleBorder(
-                             borderRadius: BorderRadius.circular(8.0),
-                           ),
-                           side: const BorderSide(color: Colors.deepPurple),
-                        ),
-                        onPressed: () {
-                          if (pdfPath != null && pdfPath.isNotEmpty) {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => PdfViewerPage(pdfAssetPath: pdfPath),
-                              ),
-                            );
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('PDF specification not available for $title.'),
-                                backgroundColor: Colors.orange,
-                              ),
-                            );
-                          }
-                        },
-                      ),
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: <Widget>[
+              SizedBox(
+                height: 275,
+                width: double.infinity,
+                child: image,
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 15.0, left: 30.0, right: 30.0),
+                // The ElevatedButton is now primarily for visual appearance.
+                // Its onPressed is redundant but harmless.
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 45),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0),
                     ),
-                 ),
-               ),
-             ],
-           ),
-       ),
-     );
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => pageWidget),
+                    );
+                  },
+                  child: Text(title, style: const TextStyle(fontSize: 16)),
+                ),
+              ),
+              const SizedBox(height: 48.0), // Placeholder for consistent height
+              Visibility(
+                visible: isCurrentlyExpanded && pdfAvailable,
+                maintainAnimation: true,
+                maintainState: true,
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 0),
+                  opacity: isCurrentlyExpanded ? 1.0 : 0.0,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 60.0, right: 60.0, bottom: 15.0, top: 5),
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
+                      label: const Text("View PDF"),
+                      style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.deepPurple,
+                          maximumSize: const Size(double.infinity, 40),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                          side: const BorderSide(color: Colors.deepPurple),
+                      ),
+                      onPressed: () {
+                        if (pdfPath != null && pdfPath.isNotEmpty) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PdfViewerPage(pdfAssetPath: pdfPath),
+                            ),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('PDF specification not available for $title.'),
+                              backgroundColor: Colors.orange,
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   String _getImagePathForPage(String title) {

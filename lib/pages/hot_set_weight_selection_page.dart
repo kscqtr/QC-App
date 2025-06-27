@@ -213,12 +213,14 @@ class _HotSetWeightSelectionPageState extends State<HotSetWeightSelectionPage> {
     const double buttonBorderRadius = 8.0;
     const double maxButtonWidth = 500.0;
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: itemHorizontalMargin, vertical: itemVerticalMargin),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(itemBorderRadius),
-        color: Colors.white,
-        boxShadow: [
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: itemHorizontalMargin, vertical: itemVerticalMargin),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(itemBorderRadius),
+          color: Colors.white,
+          boxShadow: [
           BoxShadow(
             color: Colors.grey.withAlpha(77),
             spreadRadius: 1,
@@ -268,6 +270,7 @@ class _HotSetWeightSelectionPageState extends State<HotSetWeightSelectionPage> {
           ],
         ),
       ),
+      )
     );
   }
 }

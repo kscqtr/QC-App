@@ -117,12 +117,12 @@ class _InsulationResistancePageState extends State<InsulationResistancePage> {
                             // --- Map items - Call simplified _buildCarouselItem ---
                             items: _carouselItemsData.map((itemData) {
                                return _buildCarouselItem( // Simplified call
-                                 context,
-                                 itemData['title'],
-                                 itemData['imagePath'],
-                                 () { // Navigation callback
-                                   Navigator.push( context, MaterialPageRoute(builder: (context) => itemData['pageBuilder']()));
-                                 }
+                                context,
+                                itemData['title'],
+                                itemData['imagePath'],
+                                () { // Navigation callback
+                                 Navigator.push( context, MaterialPageRoute(builder: (context) => itemData['pageBuilder']()));
+                                }
                                );
                             }).toList(),
                           ),
@@ -177,14 +177,13 @@ class _InsulationResistancePageState extends State<InsulationResistancePage> {
     ); // End Scaffold
   }
 
-  // --- Simplified _buildCarouselItem (No expansion) ---
+  // --- MODIFIED _buildCarouselItem to be tappable ---
   Widget _buildCarouselItem(
-      BuildContext context,
-      String title,
-      String imagePath,
-      VoidCallback onPressed // Only navigation callback needed
-   ) {
-
+    BuildContext context,
+    String title,
+    String imagePath,
+    VoidCallback onPressed // Only navigation callback needed
+  ) {
     final image = Image.asset( // Use final for image widget
       imagePath,
       fit: BoxFit.cover,
@@ -200,7 +199,6 @@ class _InsulationResistancePageState extends State<InsulationResistancePage> {
     const double itemHorizontalMargin = 10.0;
     const double itemVerticalMargin = 10.0;
     const double itemBorderRadius = 15.0;
-    // --- Use Increased Image Height (like SelectionPage) ---
     const double imageHeight = 350.0;
     const double buttonPaddingTop = 15.0;
     const double buttonPaddingH = 55.0; // User's specific padding
@@ -210,35 +208,37 @@ class _InsulationResistancePageState extends State<InsulationResistancePage> {
     const double buttonBorderRadius = 8.0;
     const double maxButtonWidth = 500.0;
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: itemHorizontalMargin, vertical: itemVerticalMargin),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(itemBorderRadius),
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withAlpha(77),
-            spreadRadius: 1,
-            blurRadius: 5,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-         borderRadius: BorderRadius.circular(itemBorderRadius),
-         child: Column(
-          // --- Use MainAxisSize.min ---
+    // The entire card is now wrapped in GestureDetector to make it tappable
+    return GestureDetector(
+      onTap: onPressed, // The navigation logic is called when any part of the card is tapped
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: itemHorizontalMargin, vertical: itemVerticalMargin),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(itemBorderRadius),
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withAlpha(77),
+              spreadRadius: 1,
+              blurRadius: 5,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(itemBorderRadius),
+          child: Column(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.start,
           children: <Widget>[
-            // --- Image Section with fixed height ---
+            // Image Section
             SizedBox(
               height: imageHeight,
               width: double.infinity,
               child: image,
             ),
 
-            // Button Section
+            // Button Section (now primarily for visual appearance)
             Center(
               child: SizedBox(
                 width: maxButtonWidth,
@@ -251,11 +251,11 @@ class _InsulationResistancePageState extends State<InsulationResistancePage> {
                         borderRadius: BorderRadius.circular(buttonBorderRadius),
                       ),
                     ),
-                    onPressed: onPressed,
+                    onPressed: onPressed, // Button press still works too
                     child: Text(
-                        title,
-                        style: const TextStyle(fontSize: buttonFontSize),
-                        textAlign: TextAlign.center,
+                      title,
+                      style: const TextStyle(fontSize: buttonFontSize),
+                      textAlign: TextAlign.center,
                     ),
                   ),
                 ),
@@ -263,8 +263,10 @@ class _InsulationResistancePageState extends State<InsulationResistancePage> {
             ),
              // --- REMOVED Expansion Toggle and Content ---
           ],
+         ),
         ),
       ),
     );
   }
 }
+
