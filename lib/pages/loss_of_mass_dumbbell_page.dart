@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
-// --- MODIFIED: Renamed controller class for clarity ---
+// Helper class to hold controllers for each sample's inputs
 class LossOfMassSampleControllers {
-  // --- MODIFIED: Controllers for new inputs ---
   final TextEditingController thicknessController;
   final TextEditingController iniWeightController;
   final TextEditingController finWeightController;
@@ -25,7 +24,7 @@ class LossOfMassSampleControllers {
   }
 }
 
-// --- MODIFIED: Simplified results class for per-sample data ---
+// Helper class for per-sample calculation data
 class SampleCalculationData {
   final double weightDiff;
   final int weightDiffNearest;
@@ -36,7 +35,6 @@ class SampleCalculationData {
   });
 }
 
-// --- MODIFIED: Renamed Page Widget ---
 class LossOfMassDumbbellPage extends StatefulWidget {
   const LossOfMassDumbbellPage({super.key});
 
@@ -46,7 +44,6 @@ class LossOfMassDumbbellPage extends StatefulWidget {
 
 class LossOfMassDumbbellPageState extends State<LossOfMassDumbbellPage> {
   List<LossOfMassSampleControllers> _sampleControllers = [LossOfMassSampleControllers()];
-  // --- MODIFIED: This now stores per-sample results ---
   List<dynamic> _calculatedResults = [];
   Map<String, String> _overallResults = {};
   String? _calculationError;
@@ -65,8 +62,8 @@ class LossOfMassDumbbellPageState extends State<LossOfMassDumbbellPage> {
       controllers.dispose();
     }
     _sampleControllers = [LossOfMassSampleControllers()];
-    _calculatedResults = []; // Clear per-sample results
-    _overallResults = {}; // Clear overall results
+    _calculatedResults = [];
+    _overallResults = {};
   }
 
   @override
@@ -130,7 +127,7 @@ class LossOfMassDumbbellPageState extends State<LossOfMassDumbbellPage> {
     FocusScope.of(context).unfocus();
     setState(() {
       _calculationError = null;
-      _overallResults = {}; // Clear previous results
+      _overallResults = {};
       _calculatedResults = List.filled(_sampleControllers.length, null, growable: true);
       _showResultTab = false;
     });
@@ -139,7 +136,6 @@ class LossOfMassDumbbellPageState extends State<LossOfMassDumbbellPage> {
     List<double> allThicknesses = [];
     String? firstErrorMsg;
     List<dynamic> tempPerSampleResults = List.filled(_sampleControllers.length, null, growable: true);
-
 
     for (int i = 0; i < _sampleControllers.length; i++) {
       final controllers = _sampleControllers[i];
@@ -184,7 +180,7 @@ class LossOfMassDumbbellPageState extends State<LossOfMassDumbbellPage> {
       );
       
       perSampleData.add(sampleData);
-      tempPerSampleResults[i] = sampleData; // Store per-sample data
+      tempPerSampleResults[i] = sampleData;
       allThicknesses.add(thickness!);
     }
 
@@ -218,7 +214,7 @@ class LossOfMassDumbbellPageState extends State<LossOfMassDumbbellPage> {
     double finalResult = medianWeightDiff / evaporationArea;
 
     setState(() {
-      _calculatedResults = tempPerSampleResults; // Update the per-sample results list
+      _calculatedResults = tempPerSampleResults;
       _overallResults = {
         'Mean Thickness': '${meanThickness.toStringAsFixed(3)} mm',
         'Median Weight Difference': '${medianWeightDiff.toStringAsFixed(1)} mg',
@@ -243,94 +239,108 @@ class LossOfMassDumbbellPageState extends State<LossOfMassDumbbellPage> {
     });
   }
 
-
   Widget _buildTextField({
     required String label,
     required TextEditingController controller,
-    double? fieldWidth,
   }) {
-    return SizedBox(
-      width: fieldWidth ?? MediaQuery.of(context).size.width * 0.35,
-      child: TextField(
-        controller: controller,
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        style: const TextStyle(fontSize: 14.0),
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: const TextStyle(fontSize: 14.0),
-          border: const OutlineInputBorder(),
-          isDense: true,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        ),
-        onChanged: (value) => setState(() {
-            _showResultTab = false;
-            _calculationError = null;
-        }),
+    return TextField(
+      controller: controller,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      style: const TextStyle(fontSize: 14.0),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(fontSize: 14.0),
+        border: const OutlineInputBorder(),
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       ),
+      onChanged: (value) => setState(() {
+          _showResultTab = false;
+          _calculationError = null;
+      }),
     );
   }
 
   Widget _buildSampleInputCard(int index) {
     final controllers = _sampleControllers[index];
     const String firstFieldLabel = 'Min. Thickness (mm)';
-    // --- MODIFIED: Check for per-sample results ---
     final resultData = (_showResultTab && index < _calculatedResults.length && _calculatedResults[index] is SampleCalculationData)
         ? _calculatedResults[index] as SampleCalculationData
         : null;
 
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
-      elevation: 1.0,
-      color: const Color(0xFFFFEBEB),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Sample ${index + 1}', style: const TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold)),
-                if (_sampleControllers.length > 1)
-                  IconButton(
-                    icon: Icon(Icons.remove_circle_outline, color: Colors.red.shade700),
-                    tooltip: 'Remove Sample ${index + 1}',
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    onPressed: () => _removeSample(index),
+    // --- MODIFIED: The Card is now wrapped in Center and its content is constrained ---
+    return Center(
+      child: Card(
+        margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+        elevation: 1.0,
+        color: const Color(0xFFFFEBEB),
+        child: Container( // Use a container to set a max width on the content
+          constraints: const BoxConstraints(maxWidth: 500),
+          padding: const EdgeInsets.all(12.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Sample ${index + 1}', style: const TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold)),
+                  if (_sampleControllers.length > 1)
+                    IconButton(
+                      icon: Icon(Icons.remove_circle_outline, color: Colors.red.shade700),
+                      tooltip: 'Remove Sample ${index + 1}',
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      onPressed: () => _removeSample(index),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12.0),
+              // This Row now contains a single Expanded TextField, making it centered
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: _buildTextField(
+                      label: firstFieldLabel, 
+                      controller: controllers.thicknessController
+                    ),
                   ),
-              ],
-            ),
-            const SizedBox(height: 12.0),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildTextField(label: firstFieldLabel, controller: controllers.thicknessController),
-              ],
-            ),
-            const SizedBox(height: 10.0),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildTextField(label: 'Initial Weight (g)', controller: controllers.iniWeightController),
-                const SizedBox(width: 20.0),
-                _buildTextField(label: 'Final Weight (g)', controller: controllers.finWeightController),
-              ],
-            ),
-            // --- NEW: Display per-sample results here ---
-            if (resultData != null) ...[
-              const Divider(height: 20, thickness: 1),
-              Text(
-                'Weight Difference: ${resultData.weightDiff.toStringAsFixed(3)} g',
-                style: const TextStyle(fontSize: 13, color: Colors.black87),
+                ],
               ),
-              const SizedBox(height: 4),
-              Text(
-                'Nearest Whole Number: ${resultData.weightDiffNearest} g',
-                style: const TextStyle(fontSize: 13, color: Colors.black87),
+              const SizedBox(height: 10.0),
+              // This Row uses Expanded to make the fields share space equally
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: _buildTextField(
+                      label: 'Initial Weight (g)', 
+                      controller: controllers.iniWeightController
+                    ),
+                  ),
+                  const SizedBox(width: 20.0),
+                  Expanded(
+                    child: _buildTextField(
+                      label: 'Final Weight (g)', 
+                      controller: controllers.finWeightController
+                    ),
+                  ),
+                ],
               ),
-            ]
-          ],
+              if (resultData != null) ...[
+                const Divider(height: 20, thickness: 1),
+                Text(
+                  'Weight Difference: ${resultData.weightDiff.toStringAsFixed(3)} g',
+                  style: const TextStyle(fontSize: 13, color: Colors.black87),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Nearest Whole Number: ${resultData.weightDiffNearest} g',
+                  style: const TextStyle(fontSize: 13, color: Colors.black87),
+                ),
+              ]
+            ],
+          ),
         ),
       ),
     );
@@ -424,7 +434,7 @@ class LossOfMassDumbbellPageState extends State<LossOfMassDumbbellPage> {
                                 Text(_calculationError!, style: errorStyle)
                               else ...[
                                 const Text(
-                                  'Overall Test Results:', // Changed title for clarity
+                                  'Overall Test Results',
                                   style: boldStyle
                                 ),
                                 const SizedBox(height: 8),
