@@ -1,71 +1,43 @@
 import 'package:flutter/material.dart';
-import 'dart:math'; // Import for pi
-
-// Enum for Ageing Test Types
-enum AgeingTestType { tubular, dumbbell }
+import 'dart:math';
 
 // Helper class to hold controllers for each sample's inputs
-class AgeingSampleControllers {
-  // Controllers for Tubular & Dumbbell
-  // For Dumbbell, diameterController will represent 'Width'
-  final TextEditingController diameterController; // mm (or Width for Dumbbell)
-  final TextEditingController avgThicknessController; // mm
-  final TextEditingController forceController;      // N
-  final TextEditingController elongatedController;      // Mm
+class WaterAbsorptionSampleControllers {
+  final TextEditingController thicknessController;
+  final TextEditingController m1Controller;
+  final TextEditingController m2Controller;
+  final TextEditingController m3Controller;
 
-  AgeingSampleControllers()
-      : diameterController = TextEditingController(),
-        avgThicknessController = TextEditingController(),
-        forceController = TextEditingController(),
-        elongatedController = TextEditingController();
+  WaterAbsorptionSampleControllers()
+      : thicknessController = TextEditingController(),
+        m1Controller = TextEditingController(),
+        m2Controller = TextEditingController(),
+        m3Controller = TextEditingController();
 
   void dispose() {
-    diameterController.dispose();
-    avgThicknessController.dispose();
-    forceController.dispose();
-    elongatedController.dispose();
+    thicknessController.dispose();
+    m1Controller.dispose();
+    m2Controller.dispose();
+    m3Controller.dispose();
   }
 
   void clear() {
-    diameterController.clear();
-    avgThicknessController.clear();
-    forceController.clear();
-    elongatedController.clear();
+    thicknessController.clear();
+    m1Controller.clear();
+    m2Controller.clear();
+    m3Controller.clear();
   }
 }
 
-// Helper class to hold the calculated results for a single sample (Tubular)
-class TubularSampleResults {
-  final String area;
-  final String tensileStrength;
-  final String elongation;
+// Helper class for per-sample calculation data
+class SampleCalculationData {
+  final double surfaceArea;
+  final double waterAbsorption;
 
-  TubularSampleResults(
-      {required this.area,
-      required this.tensileStrength,
-      required this.elongation});
-
-  @override
-  String toString() {
-    return 'Area: $area, TS: $tensileStrength, Elong: $elongation';
-  }
-}
-
-// Helper class to hold the calculated results for a single sample (Dumbbell)
-class DumbbellSampleResults {
-  final String area;
-  final String tensileStrength;
-  final String elongation;
-
-  DumbbellSampleResults(
-      {required this.area,
-      required this.tensileStrength,
-      required this.elongation});
-
-  @override
-  String toString() {
-    return 'Area: $area, TS: $tensileStrength, Elong: $elongation';
-  }
+  SampleCalculationData({
+    required this.surfaceArea,
+    required this.waterAbsorption,
+  });
 }
 
 class WaterAbsorptionStripPage extends StatefulWidget {
@@ -76,18 +48,15 @@ class WaterAbsorptionStripPage extends StatefulWidget {
 }
 
 class WaterAbsorptionStripPageState extends State<WaterAbsorptionStripPage> {
-  AgeingTestType _selectedAgeingType = AgeingTestType.tubular;
-  List<AgeingSampleControllers> _sampleControllers = [AgeingSampleControllers()];
-  // Store structured results (TubularSampleResults, DumbbellSampleResults) or "SKIPPED" string
+  List<WaterAbsorptionSampleControllers> _sampleControllers = [WaterAbsorptionSampleControllers()];
+  // --- MODIFIED: This now stores per-sample results ---
   List<dynamic> _calculatedResults = [];
   String? _calculationError;
   bool _showResultTab = false;
   final int _maxSamples = 6;
-  final ScrollController _scrollController = ScrollController(); // Scroll controller for auto-scroll
+  final ScrollController _scrollController = ScrollController();
 
-  // New state variable for original length selection
-  double _selectedOriginalLength = 20.0; // Default to 20mm
-  final List<double> _originalLengthOptions = [10.0, 20.0];
+  String _selectedWeightUnit = 'mg';
 
 
   @override
@@ -97,14 +66,12 @@ class WaterAbsorptionStripPageState extends State<WaterAbsorptionStripPage> {
   }
 
   void _initializeSamplesAndResults() {
-    // Dispose existing controllers if any, before re-initializing
     for (var controllers in _sampleControllers) {
       controllers.dispose();
     }
-    _sampleControllers = [AgeingSampleControllers()];
-    _calculatedResults =
-        List.filled(_sampleControllers.length, null, growable: true);
-    _selectedOriginalLength = 20.0; // Reset to default on init
+    _sampleControllers = [WaterAbsorptionSampleControllers()];
+    _calculatedResults = [];
+    _selectedWeightUnit = 'mg';
   }
 
   @override
@@ -112,37 +79,14 @@ class WaterAbsorptionStripPageState extends State<WaterAbsorptionStripPage> {
     for (var controllers in _sampleControllers) {
       controllers.dispose();
     }
-    _scrollController.dispose(); // Dispose scroll controller
+    _scrollController.dispose();
     super.dispose();
   }
 
-  void _onTestTypeChanged(AgeingTestType? newType) {
-    if (newType != null && newType != _selectedAgeingType) {
-      setState(() {
-        _selectedAgeingType = newType;
-        _resetFields(resetType: false); // Reset fields but keep the newly selected type
-      });
-    }
-  }
-
-  // New method for handling original length dropdown changes
-  void _onOriginalLengthChanged(double? newLength) {
-    if (newLength != null && newLength != _selectedOriginalLength) {
-      setState(() {
-        _selectedOriginalLength = newLength;
-        _showResultTab = false; // Hide results when input changes
-        _calculationError = null; // Clear error when input changes
-      });
-    }
-  }
-
-
  void _scrollToBottom() {
-    // Ensure the scroll controller has clients and the widget is built.
     if (_scrollController.hasClients) {
-      // Using addPostFrameCallback to ensure the scroll happens after the layout pass
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_scrollController.hasClients) { // Check again inside callback
+        if (_scrollController.hasClients) {
             _scrollController.animateTo(
             _scrollController.position.maxScrollExtent,
             duration: const Duration(milliseconds: 300),
@@ -156,14 +100,11 @@ class WaterAbsorptionStripPageState extends State<WaterAbsorptionStripPage> {
   void _addSample() {
     if (_sampleControllers.length < _maxSamples) {
       setState(() {
-        _sampleControllers.add(AgeingSampleControllers());
-        // Ensure _calculatedResults list is extended and initialized with null
-        _calculatedResults = List.filled(_sampleControllers.length, null, growable: true);
-        _showResultTab = false; // Hide results when inputs change
+        _sampleControllers.add(WaterAbsorptionSampleControllers());
+        _showResultTab = false;
         _calculationError = null;
+        _calculatedResults = List.filled(_sampleControllers.length, null, growable: true);
       });
-      // Scroll to the bottom after the state is updated and widget rebuilds
-      // Adding a slight delay to ensure the new item is rendered before scrolling
       Future.delayed(const Duration(milliseconds: 50), _scrollToBottom);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -177,17 +118,12 @@ class WaterAbsorptionStripPageState extends State<WaterAbsorptionStripPage> {
       setState(() {
         _sampleControllers[index].dispose();
         _sampleControllers.removeAt(index);
-        if (_calculatedResults.length > index) {
-          _calculatedResults.removeAt(index);
-        }
-        // Re-evaluate if results tab should be shown
+        _calculatedResults.removeAt(index);
+        
         bool hasAnyValidResult = _calculatedResults.any((r) => r != null && r != "SKIPPED");
         if (!hasAnyValidResult && _calculationError == null) {
             _showResultTab = false;
-        } else {
-            _showResultTab = _calculatedResults.any((r) => r != null) || _calculationError != null;
         }
-        if (!_showResultTab) _calculationError = null;
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -203,214 +139,103 @@ class WaterAbsorptionStripPageState extends State<WaterAbsorptionStripPage> {
       _calculatedResults = List.filled(_sampleControllers.length, null, growable: true);
       _showResultTab = false;
     });
-
-    if (_selectedAgeingType == AgeingTestType.tubular) {
-      _calculateForTubular();
-    } else if (_selectedAgeingType == AgeingTestType.dumbbell) {
-      _calculateForDumbbell();
-    }
-  }
-
-  void _calculateForTubular() {
-    List<dynamic> tempResults = List.filled(_sampleControllers.length, null, growable: true);
+    
     String? firstErrorMsg;
+    List<dynamic> tempPerSampleResults = List.filled(_sampleControllers.length, null, growable: true);
+
 
     for (int i = 0; i < _sampleControllers.length; i++) {
       final controllers = _sampleControllers[i];
-      final String diameterText = controllers.diameterController.text;
-      final String thicknessText = controllers.avgThicknessController.text;
-      final String forceText = controllers.forceController.text;
-      final String elongatedText = controllers.elongatedController.text;
+      final String thicknessText = controllers.thicknessController.text;
+      final String m1Text = controllers.m1Controller.text;
+      final String m2Text = controllers.m2Controller.text;
+      final String m3Text = controllers.m3Controller.text;
 
-      if (diameterText.isEmpty && thicknessText.isEmpty && forceText.isEmpty && elongatedText.isEmpty) {
-        if (_sampleControllers.length > 1 && (i == 0 || (tempResults.length > i-1 && tempResults[i-1] != null))) {
-            tempResults[i] = "SKIPPED";
+      if (thicknessText.isEmpty && m1Text.isEmpty && m2Text.isEmpty && m3Text.isEmpty) {
+         if (_sampleControllers.length > 1) {
+            tempPerSampleResults[i] = "SKIPPED";
             continue;
-        } else if (_sampleControllers.length == 1) {
+        } else {
             firstErrorMsg ??= 'Please enter data for Sample ${i + 1}.';
+            break;
         }
       }
 
-      double? diameter = double.tryParse(diameterText);
       double? thickness = double.tryParse(thicknessText);
-      double? force = double.tryParse(forceText);
-      double? elongatedMm = double.tryParse(elongatedText);
+      double? m1Weight = double.tryParse(m1Text);
+      double? m2Weight = double.tryParse(m2Text);
+      double? m3Weight = double.tryParse(m3Text);
       String? errorMsg;
 
-      if (diameter == null && diameterText.isNotEmpty) {errorMsg = 'Invalid Diameter (Sample ${i+1}).';}
-      else if (thickness == null && thicknessText.isNotEmpty) {errorMsg = 'Invalid Avg. Thickness (Sample ${i+1}).';}
-      else if (force == null && forceText.isNotEmpty) {errorMsg = 'Invalid Force (Sample ${i+1}).';}
-      else if (elongatedMm == null && elongatedText.isNotEmpty) {errorMsg = 'Invalid Elongated (Sample ${i+1}).';}
-      else if (diameterText.isEmpty || thicknessText.isEmpty || forceText.isEmpty || elongatedText.isEmpty) {
-        if (tempResults[i] != "SKIPPED") {
-            errorMsg = 'All fields required for Sample ${i+1}.';
-        }
-      }
-      else if (diameter != null && thickness != null && force != null && elongatedMm != null) {
-        if (diameter <= 0) {errorMsg = 'Diameter must be positive (Sample ${i+1}).';}
-        else if (thickness <= 0) {errorMsg = 'Avg. Thickness must be positive (Sample ${i+1}).';}
-        else if (thickness >= diameter / 2) {errorMsg = 'Avg. Thickness too large for Sample ${i+1}.';}
-        else if (force <= 0) {errorMsg = 'Force must be positive (Sample ${i+1}).';}
-        else if (elongatedMm <= 0) {errorMsg = 'Elongated length must be positive (Sample ${i+1}).';}
-        // Using _selectedOriginalLength for elongation calculation
-        // else if (elongatedMm < _selectedOriginalLength && elongatedText.isNotEmpty) { /* Allow negative elongation */ }
-      }
+      if (thickness == null) {errorMsg = 'Invalid Min. Thickness (Sample ${i+1}).';}
+      else if (m1Weight == null) {errorMsg = 'Invalid M1 Weight (Sample ${i+1}).';}
+      else if (m2Weight == null) {errorMsg = 'Invalid M2 Weight (Sample ${i+1}).';}
+      else if (m3Weight == null) {errorMsg = 'Invalid M3 Weight (Sample ${i+1}).';}
+      else if (thickness <= 0) {errorMsg = 'Thickness must be positive (Sample ${i+1}).';}
+      else if (m1Weight < 0) {errorMsg = 'M1 Weight cannot be negative (Sample ${i+1}).';}
+      else if (m2Weight < 0) {errorMsg = 'M2 Weight cannot be negative (Sample ${i+1}).';}
+      else if (m3Weight < 0) {errorMsg = 'M3 Weight cannot be negative (Sample ${i+1}).';}
 
       if (errorMsg != null) {
         firstErrorMsg ??= errorMsg;
-        tempResults[i] = null;
-      } else if (diameter != null && thickness != null && force != null && elongatedMm != null) {
-        double area = (diameter - thickness) * thickness * pi;
-        if (area <= 0) {
-          firstErrorMsg ??= 'Calculated area is invalid for Sample ${i+1}. Check Diameter and Thickness.';
-          tempResults[i] = null;
-        } else {
-          double tensileStrength = force / area;
-          // Use _selectedOriginalLength from state
-          double originalLengthMm = _selectedOriginalLength; 
-          double elongationPercentage = ((elongatedMm - originalLengthMm) / originalLengthMm) * 100.0;
-          tempResults[i] = TubularSampleResults(
-            area: '${area.toStringAsFixed(2)} mm²',
-            tensileStrength: '${tensileStrength.toStringAsFixed(2)} N/mm²',
-            elongation: '${elongationPercentage.toStringAsFixed(2)}%',
-          );
-        }
-      } else if (tempResults[i] != "SKIPPED" && (diameterText.isNotEmpty || thicknessText.isNotEmpty || forceText.isNotEmpty || elongatedText.isNotEmpty)) {
-        firstErrorMsg ??= 'Incomplete or invalid data for Sample ${i+1}.';
-        tempResults[i] = null;
+        break;
       }
+
+      double m1WeightMg = m1Weight!;
+      if (_selectedWeightUnit == 'g') m1WeightMg *= 1000;
+
+      double m2WeightMg = m2Weight!;
+      if (_selectedWeightUnit == 'g') m2WeightMg *= 1000;
+
+      double m3WeightMg = m3Weight!;
+      if (_selectedWeightUnit == 'g') m3WeightMg *= 1000;
+
+      const double stripLength = 100.0;
+      const double stripWidth = 5.0;
+
+      double surfaceArea = (2 * ( (stripLength * stripWidth) + (stripLength * thickness!) + (stripWidth * thickness) )) / 100;
+      
+      double maxWeightDiff = max(m2WeightMg - m1WeightMg, m2WeightMg - m3WeightMg);
+      
+      double waterAbsorption = 0;
+      if (surfaceArea > 0) {
+        waterAbsorption = maxWeightDiff / surfaceArea;
+      } else {
+        firstErrorMsg ??= 'Invalid surface area calculated for Sample ${i + 1}';
+        break;
+      }
+      
+      tempPerSampleResults[i] = SampleCalculationData(
+        surfaceArea: surfaceArea,
+        waterAbsorption: waterAbsorption,
+      );
+    }
+
+    if (firstErrorMsg != null) {
+        setState(() {
+            _calculationError = firstErrorMsg;
+            _showResultTab = true;
+        });
+        return;
     }
 
     setState(() {
-      _calculatedResults = tempResults;
-      if (firstErrorMsg != null) {
-        _calculationError = firstErrorMsg;
-      }
-
-      bool hasActualCalculations = _calculatedResults.any((r) => r is TubularSampleResults || r is DumbbellSampleResults);
-      bool hasSkipped = _calculatedResults.any((r) => r == "SKIPPED");
-
-      if (hasActualCalculations || _calculationError != null || hasSkipped) {
-        if (!hasActualCalculations && _calculationError == null && hasSkipped) {
-          _calculationError = "All valid samples were skipped. No results to display.";
-        } else if (!hasActualCalculations && _calculationError == null && !hasSkipped) {
-          _calculationError = "No valid data entered for calculation.";
-        }
-        _showResultTab = true;
-      } else {
-         _calculationError = "No data to process."; // Should ideally not be reached
-        _showResultTab = true; // Show tab to display this message
-      }
+      _calculatedResults = tempPerSampleResults;
+      _showResultTab = true;
     });
   }
 
-  void _calculateForDumbbell() {
-    List<dynamic> tempResults = List.filled(_sampleControllers.length, null, growable: true);
-    String? firstErrorMsg;
-
-    for (int i = 0; i < _sampleControllers.length; i++) {
-      final controllers = _sampleControllers[i];
-      // For Dumbbell, diameterController holds 'Width'
-      final String widthText = controllers.diameterController.text;
-      final String thicknessText = controllers.avgThicknessController.text;
-      final String forceText = controllers.forceController.text;
-      final String elongatedText = controllers.elongatedController.text;
-
-      if (widthText.isEmpty && thicknessText.isEmpty && forceText.isEmpty && elongatedText.isEmpty) {
-         if (_sampleControllers.length > 1 && (i == 0 || (tempResults.length > i-1 && tempResults[i-1] != null))) {
-            tempResults[i] = "SKIPPED";
-            continue;
-        } else if (_sampleControllers.length == 1) {
-            firstErrorMsg ??= 'Please enter data for Sample ${i + 1}.';
-        }
-      }
-
-      double? width = double.tryParse(widthText);
-      double? thickness = double.tryParse(thicknessText);
-      double? force = double.tryParse(forceText);
-      double? elongatedMm = double.tryParse(elongatedText);
-      String? errorMsg;
-
-      if (width == null && widthText.isNotEmpty) {errorMsg = 'Invalid Width (Sample ${i+1}).';}
-      else if (thickness == null && thicknessText.isNotEmpty) {errorMsg = 'Invalid Avg. Thickness (Sample ${i+1}).';}
-      else if (force == null && forceText.isNotEmpty) {errorMsg = 'Invalid Force (Sample ${i+1}).';}
-      else if (elongatedMm == null && elongatedText.isNotEmpty) {errorMsg = 'Invalid Elongated (Sample ${i+1}).';}
-      else if (widthText.isEmpty || thicknessText.isEmpty || forceText.isEmpty || elongatedText.isEmpty) {
-        if (tempResults[i] != "SKIPPED") {
-             errorMsg = 'All fields required for Sample ${i+1}.';
-        }
-      }
-      else if (width != null && thickness != null && force != null && elongatedMm != null) {
-        if (width <= 0) {errorMsg = 'Width must be positive (Sample ${i+1}).';}
-        else if (thickness <= 0) {errorMsg = 'Avg. Thickness must be positive (Sample ${i+1}).';}
-        else if (force <= 0) {errorMsg = 'Force must be positive (Sample ${i+1}).';}
-        else if (elongatedMm <= 0) {errorMsg = 'Elongated length must be positive (Sample ${i+1}).';}
-      }
-
-      if (errorMsg != null) {
-        firstErrorMsg ??= errorMsg;
-        tempResults[i] = null;
-      } else if (width != null && thickness != null && force != null && elongatedMm != null) {
-        // Area = Width * Thickness for Dumbbell
-        double area = width * thickness;
-        if (area <= 0) { // Additional check for calculated area
-            firstErrorMsg ??= 'Calculated area is invalid for Sample ${i+1}. Check Width and Thickness.';
-            tempResults[i] = null;
-        } else {
-            double tensileStrength = force / area;
-            // Use _selectedOriginalLength from state
-            double originalLengthMm = _selectedOriginalLength; 
-            double elongationPercentage = ((elongatedMm - originalLengthMm) / originalLengthMm) * 100.0;
-
-            tempResults[i] = DumbbellSampleResults(
-                area: '${area.toStringAsFixed(2)} mm²',
-                tensileStrength: '${tensileStrength.toStringAsFixed(2)} N/mm²',
-                elongation: '${elongationPercentage.toStringAsFixed(2)}%',
-            );
-        }
-      } else if (tempResults[i] != "SKIPPED" && (widthText.isNotEmpty || thicknessText.isNotEmpty || forceText.isNotEmpty || elongatedText.isNotEmpty)) {
-        firstErrorMsg ??= 'Incomplete or invalid data for Sample ${i+1}.';
-        tempResults[i] = null;
-      }
-    }
-
-    setState(() {
-      _calculatedResults = tempResults;
-      if (firstErrorMsg != null) {
-        _calculationError = firstErrorMsg;
-      }
-
-      bool hasActualCalculations = _calculatedResults.any((r) => r is TubularSampleResults || r is DumbbellSampleResults);
-      bool hasSkipped = _calculatedResults.any((r) => r == "SKIPPED");
-
-      if (hasActualCalculations || _calculationError != null || hasSkipped) {
-        if (!hasActualCalculations && _calculationError == null && hasSkipped) {
-          _calculationError = "All valid samples were skipped. No results to display.";
-        } else if (!hasActualCalculations && _calculationError == null && !hasSkipped) {
-          _calculationError = "No valid data entered for calculation.";
-        }
-        _showResultTab = true;
-      } else {
-        _calculationError = "No data to process.";
-        _showResultTab = true;
-      }
-    });
-  }
-
-  void _resetFields({bool resetType = true}) { 
+  void _resetFields() {
     FocusScope.of(context).unfocus();
     setState(() {
       for (var controllers in _sampleControllers) {
         controllers.dispose();
       }
-      _sampleControllers = [AgeingSampleControllers()];
-      _calculatedResults = List.filled(_sampleControllers.length, null, growable: true);
+      _sampleControllers = [WaterAbsorptionSampleControllers()];
+      _calculatedResults = [];
       _calculationError = null;
       _showResultTab = false;
-      _selectedOriginalLength = 20.0; // Reset original length to default
-      if (resetType) { // Only reset type if explicitly told to
-        _selectedAgeingType = AgeingTestType.tubular; // Reset type to default
-      }
+      _selectedWeightUnit = 'mg';
     });
   }
 
@@ -418,81 +243,139 @@ class WaterAbsorptionStripPageState extends State<WaterAbsorptionStripPage> {
   Widget _buildTextField({
     required String label,
     required TextEditingController controller,
-    double? fieldWidth,
   }) {
-    return SizedBox(
-      width: fieldWidth ?? MediaQuery.of(context).size.width * 0.35,
-      child: TextField(
-        controller: controller,
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        style: const TextStyle(fontSize: 14.0),
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: const TextStyle(fontSize: 14.0),
-          border: const OutlineInputBorder(),
-          isDense: true,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        ),
-        onChanged: (value) => setState(() {
-            _showResultTab = false; // Hide results when input changes
-            _calculationError = null; // Clear error when input changes
-        }),
+    return TextField(
+      controller: controller,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      style: const TextStyle(fontSize: 14.0),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(fontSize: 14.0),
+        border: const OutlineInputBorder(),
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       ),
+      onChanged: (value) => setState(() {
+          _showResultTab = false;
+          _calculationError = null;
+      }),
     );
   }
 
   Widget _buildSampleInputCard(int index) {
     final controllers = _sampleControllers[index];
-    String firstFieldLabel = _selectedAgeingType == AgeingTestType.tubular
-        ? 'D, Diameter (mm)'
-        : 'W, Width (mm)';
+    final resultData = (_showResultTab && index < _calculatedResults.length && _calculatedResults[index] is SampleCalculationData)
+        ? _calculatedResults[index] as SampleCalculationData
+        : null;
     
-    String secondFieldLabel = _selectedAgeingType == AgeingTestType.tubular
-    ? 'T, Avg. Thick (mm)'
-    : 'T, Min. Thick (mm)';
-
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
-      elevation: 1.0,
-      color: const Color(0xFFFFEBEB), // Light pinkish background for card
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Center(
+      child: Card(
+        margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+        elevation: 1.0,
+        color: const Color(0xFFFFEBEB),
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 500),
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Sample ${index + 1}', style: const TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold)),
-                if (_sampleControllers.length > 1)
-                  IconButton(
-                    icon: Icon(Icons.remove_circle_outline, color: Colors.red.shade700),
-                    tooltip: 'Remove Sample ${index + 1}',
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    onPressed: () => _removeSample(index),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Sample ${index + 1}', style: const TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold)),
+                    if (_sampleControllers.length > 1)
+                      IconButton(
+                        icon: Icon(Icons.remove_circle_outline, color: Colors.red.shade700),
+                        tooltip: 'Remove Sample ${index + 1}',
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: () => _removeSample(index),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 12.0),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: _buildTextField(
+                        label: 'Thickness (mm)', 
+                        controller: controllers.thicknessController
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10.0),
+                Card(
+                  color: const Color.fromARGB(255, 255, 218, 218),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(12.0, 12.0, 12.0, 8.0),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Weight', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+                            SizedBox(
+                              width: 75,
+                              height: 40,
+                              child: DropdownButtonFormField<String>(
+                                decoration: const InputDecoration(
+                                  border: OutlineInputBorder(),
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                ),
+                                value: _selectedWeightUnit,
+                                items: ['mg', 'g'].map((String value) {
+                                  return DropdownMenuItem<String>(
+                                    value: value,
+                                    child: Text(value, style: const TextStyle(fontSize: 14.0)),
+                                  );
+                                }).toList(),
+                                onChanged: (val) {
+                                  setState(() {
+                                    _selectedWeightUnit = val!;
+                                    _showResultTab = false;
+                                    _calculationError = null;
+                                  });
+                                },
+                              ),
+                            )
+                          ],
+                        ),
+                        const SizedBox(height: 12.0),
+                        Row(
+                          children: [
+                            Expanded(child: _buildTextField(label: 'M1', controller: controllers.m1Controller)),
+                            const SizedBox(width: 20.0),
+                            Expanded(child: _buildTextField(label: 'M2', controller: controllers.m2Controller)),
+                          ],
+                        ),
+                        const SizedBox(height: 10.0),
+                        Row(
+                          children: [
+                             Expanded(child: _buildTextField(label: 'M3', controller: controllers.m3Controller)),
+                          ],
+                        )
+                      ],
+                    ),
                   ),
+                ),
+                // --- MODIFIED: Results display within the card ---
+                if (resultData != null) ...[
+                  const Divider(height: 20, thickness: 1),
+                  Text('Strip Length: 100.0 mm', style: const TextStyle(fontSize: 13, color: Colors.black87)),
+                  const SizedBox(height: 4),
+                  Text('Strip Width: 5.0 mm', style: const TextStyle(fontSize: 13, color: Colors.black87)),
+                  const SizedBox(height: 4),
+                  Text('Surface Area: ${resultData.surfaceArea.toStringAsFixed(3)} cm²', style: const TextStyle(fontSize: 13, color: Colors.black87)),
+                  const SizedBox(height: 4),
+                  Text('Water Absorption: ${resultData.waterAbsorption.toStringAsFixed(3)} mg/cm²', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87)),
+                ]
               ],
             ),
-            const SizedBox(height: 12.0),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildTextField(label: firstFieldLabel, controller: controllers.diameterController),
-                const SizedBox(width: 20.0),
-                _buildTextField(label: secondFieldLabel, controller: controllers.avgThicknessController),
-              ],
-            ),
-            const SizedBox(height: 10.0),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildTextField(label: 'F, Force (N)', controller: controllers.forceController),
-                const SizedBox(width: 20.0),
-                _buildTextField(label: 'E, Elongated (mm)', controller: controllers.elongatedController),
-              ],
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -501,62 +384,19 @@ class WaterAbsorptionStripPageState extends State<WaterAbsorptionStripPage> {
   @override
   Widget build(BuildContext context) {
     const boldStyle = TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87);
-    const normalStyle = TextStyle(fontSize: 15, color: Colors.black87);
     final errorStyle = boldStyle.copyWith(color: Colors.red.shade700, fontSize: 16);
-    // final resultLabelStyle = normalStyle.copyWith(fontSize: 14, fontWeight: FontWeight.w500);
-    final resultValueStyle = normalStyle.copyWith(fontSize: 14);
-    // final noteStyle = TextStyle(fontSize: 13, color: Colors.grey.shade700, fontStyle: FontStyle.italic);
-
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Tensile Strength & Elongation')),
+      appBar: AppBar(title: const Text('Water Absorption - Strip')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView( // Attach scroll controller here
+        child: SingleChildScrollView(
           controller: _scrollController,
           child: Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center, 
               children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 10.0),
-                  child: DropdownButtonFormField<AgeingTestType>(
-                    decoration: const InputDecoration(
-                      labelText: 'Select Ageing Test Type',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-                    ),
-                    value: _selectedAgeingType,
-                    items: AgeingTestType.values.map((AgeingTestType type) {
-                      return DropdownMenuItem<AgeingTestType>(
-                        value: type,
-                        child: Text(type.toString().split('.').last[0].toUpperCase() + type.toString().split('.').last.substring(1)),
-                      );
-                    }).toList(),
-                    onChanged: _onTestTypeChanged,
-                  ),
-                ),
-                // New Dropdown for Original Length
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 10.0),
-                  child: DropdownButtonFormField<double>(
-                    decoration: const InputDecoration(
-                      labelText: 'Select Original Length for Elongation',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-                    ),
-                    value: _selectedOriginalLength,
-                    items: _originalLengthOptions.map((double length) {
-                      return DropdownMenuItem<double>(
-                        value: length,
-                        child: Text('${length.toInt()} mm'),
-                      );
-                    }).toList(),
-                    onChanged: _onOriginalLengthChanged,
-                  ),
-                ),
-                
                 ListView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -580,7 +420,7 @@ class WaterAbsorptionStripPageState extends State<WaterAbsorptionStripPage> {
                             minimumSize: const Size(110, 45))),
                     const SizedBox(width: 8),
                     ElevatedButton.icon(
-                        onPressed: () => _resetFields(resetType: true), 
+                        onPressed: _resetFields,
                         icon: const Icon(Icons.refresh),
                         label: const Text('Reset'),
                         style: ElevatedButton.styleFrom(
@@ -589,11 +429,11 @@ class WaterAbsorptionStripPageState extends State<WaterAbsorptionStripPage> {
                   ],
                 ),
 
-                Row( // Add Sample button row
+                Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const SizedBox(height: 80), // For spacing from above buttons
-                     ElevatedButton.icon( // "Add Sample" button now always available
+                    const SizedBox(height: 80),
+                     ElevatedButton.icon(
                         onPressed: _addSample,
                         icon: const Icon(Icons.add),
                         label: const Text('Add'),
@@ -604,110 +444,24 @@ class WaterAbsorptionStripPageState extends State<WaterAbsorptionStripPage> {
                 ),
                 const SizedBox(height: 30),
 
+                // --- MODIFIED: This now only shows an error message if one exists ---
                 AnimatedOpacity(
-                  opacity: _showResultTab ? 1.0 : 0.0,
+                  opacity: _showResultTab && _calculationError != null ? 1.0 : 0.0,
                   duration: const Duration(milliseconds: 300),
-                  child: _showResultTab
+                  child: _showResultTab && _calculationError != null
                       ? Container(
                           constraints: const BoxConstraints(maxWidth: 380),
                           padding: const EdgeInsets.all(16.0),
                           decoration: BoxDecoration(
-                            color: _calculationError != null && !(_calculatedResults.any((r) => r is TubularSampleResults || r is DumbbellSampleResults))
-                                ? Colors.red[50]
-                                : Colors.blue[50],
+                            color: Colors.red[50],
                             borderRadius: BorderRadius.circular(8.0),
-                            border: Border.all(
-                                color: _calculationError != null && !(_calculatedResults.any((r) => r is TubularSampleResults || r is DumbbellSampleResults))
-                                    ? Colors.red.shade300
-                                    : Colors.blue.shade200),
+                            border: Border.all(color: Colors.red.shade300),
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (_calculationError != null && !(_calculatedResults.any((r) => r is TubularSampleResults || r is DumbbellSampleResults)))
-                                Text(_calculationError!, style: errorStyle)
-                              else ...[
-                                Text(
-                                  _selectedAgeingType == AgeingTestType.tubular
-                                      ? 'Tubular Test Results:'
-                                      : 'Dumbbell Test Results:',
-                                  style: boldStyle
-                                ),
-                                if (_calculationError != null) // Show error alongside results if any
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 5.0, bottom: 8.0),
-                                    child: Text(_calculationError!, style: errorStyle.copyWith(fontSize: 14)),
-                                  ),
-                                ListView.builder(
-                                  shrinkWrap: true,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  itemCount: _calculatedResults.length,
-                                  itemBuilder: (context, index) {
-                                    final result = _calculatedResults[index];
-                                    if (result == "SKIPPED") {
-                                      return Padding(
-                                        padding: const EdgeInsets.symmetric(vertical: 3.0),
-                                        child: Text('Sample ${index + 1}: Skipped', style: normalStyle.copyWith(fontStyle: FontStyle.italic, color: Colors.grey[700])),
-                                      );
-                                    }
-                                    if (result is TubularSampleResults) {
-                                      return Padding(
-                                        padding: const EdgeInsets.symmetric(vertical: 6.0),
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text('Sample ${index + 1}:', style: boldStyle.copyWith(fontSize: 15)),
-                                            Padding(
-                                              padding: const EdgeInsets.only(left: 8.0, top: 2.0),
-                                              child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Text('Area: (D - T) * T * ${pi.toStringAsFixed(4)} = ${result.area}', style: resultValueStyle), // Display Pi value used
-                                                  Text('Tensile Strength: F/A = ${result.tensileStrength}', style: resultValueStyle),
-                                                  Text('Elongation: [(E - $_selectedOriginalLength)/$_selectedOriginalLength] * 100% = ${result.elongation}', style: resultValueStyle), // Show selected original length
-                                                ],
-                                              ),
-                                            ),
-                                            if (index < _calculatedResults.length -1 && _calculatedResults.skip(index+1).any((r) => r != null && r != "SKIPPED"))
-                                               const Divider(height: 10, thickness: 0.5),
-                                          ],
-                                        ),
-                                      );
-                                    }
-                                    if (result is DumbbellSampleResults) {
-                                      return Padding(
-                                        padding: const EdgeInsets.symmetric(vertical: 6.0),
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text('Sample ${index + 1}:', style: boldStyle.copyWith(fontSize: 15)),
-                                            Padding(
-                                              padding: const EdgeInsets.only(left: 8.0, top: 2.0),
-                                              child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Text('Area: W * T = ${result.area}', style: resultValueStyle), // Clarified formula
-                                                  Text('Tensile Strength: F/A = ${result.tensileStrength}', style: resultValueStyle),
-                                                  Text('Elongation: [(E - $_selectedOriginalLength)/$_selectedOriginalLength] * 100% = ${result.elongation}', style: resultValueStyle), // Show selected original length
-                                                ],
-                                              ),
-                                            ),
-                                           if (index < _calculatedResults.length -1 && _calculatedResults.skip(index+1).any((r) => r != null && r != "SKIPPED"))
-                                               const Divider(height: 10, thickness: 0.5),
-                                          ],
-                                        ),
-                                      );
-                                    }
-                                    return const SizedBox.shrink(); // For null results not caught as errors/skipped
-                                  },
-                                ),
-                              ]
-                            ],
-                          ),
+                          child: Text(_calculationError!, style: errorStyle),
                         )
                       : const SizedBox.shrink(),
                 ),
-                const SizedBox(height: 20), // For scroll padding at the bottom
+                const SizedBox(height: 20),
               ],
             ),
           ),
@@ -716,4 +470,3 @@ class WaterAbsorptionStripPageState extends State<WaterAbsorptionStripPage> {
     );
   }
 }
-

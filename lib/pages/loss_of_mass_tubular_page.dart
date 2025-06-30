@@ -60,6 +60,9 @@ class LossOfMassTubularPageState extends State<LossOfMassTubularPage> {
   bool _showResultTab = false;
   final int _maxSamples = 6;
   final ScrollController _scrollController = ScrollController();
+  
+  String _selectedWeightUnit = 'mg';
+
 
   @override
   void initState() {
@@ -74,6 +77,7 @@ class LossOfMassTubularPageState extends State<LossOfMassTubularPage> {
     _sampleControllers = [LossOfMassSampleControllers()];
     _calculatedResults = [];
     _overallResults = {};
+    _selectedWeightUnit = 'mg';
   }
 
   @override
@@ -194,7 +198,17 @@ class LossOfMassTubularPageState extends State<LossOfMassTubularPage> {
         break;
       }
 
-      double weightDiff = initialWeight! - finalWeight!;
+      double initialWeightMg = initialWeight!;
+      if (_selectedWeightUnit == 'g') {
+        initialWeightMg *= 1000;
+      }
+
+      double finalWeightMg = finalWeight!;
+      if (_selectedWeightUnit == 'g') {
+        finalWeightMg *= 1000;
+      }
+      
+      double weightDiff = initialWeightMg - finalWeightMg;
       
       final sampleData = SampleCalculationData(
         weightDiff: weightDiff,
@@ -224,7 +238,6 @@ class LossOfMassTubularPageState extends State<LossOfMassTubularPage> {
         return;
     }
 
-    // --- MODIFIED: Helper function to calculate median ---
     double calculateMedian(List<double> numbers) {
       if (numbers.isEmpty) return 0;
       numbers.sort();
@@ -240,7 +253,6 @@ class LossOfMassTubularPageState extends State<LossOfMassTubularPage> {
     double medianAvgThickness = calculateMedian(allAvgThicknesses);
     double medianLength = calculateMedian(allLengths);
     
-    // --- MODIFIED: Use the rounded nearest whole number for median weight diff calculation ---
     List<int> sortedNearestWeightDiffs = perSampleData.map((d) => d.weightDiffNearest).toList();
     sortedNearestWeightDiffs.sort();
     double medianWeightDiff;
@@ -251,7 +263,6 @@ class LossOfMassTubularPageState extends State<LossOfMassTubularPage> {
         medianWeightDiff = (sortedNearestWeightDiffs[middle - 1] + sortedNearestWeightDiffs[middle]) / 2.0;
     }
 
-    // --- MODIFIED: Evaporation area now uses median values ---
     double evaporationArea = (2 * pi * (medianOuterDiameter - medianAvgThickness) * (medianLength + medianAvgThickness)) / medianLength;
     double lossOfMass = medianWeightDiff / evaporationArea;
 
@@ -280,6 +291,7 @@ class LossOfMassTubularPageState extends State<LossOfMassTubularPage> {
       _calculatedResults = [];
       _calculationError = null;
       _showResultTab = false;
+      _selectedWeightUnit = 'mg';
     });
   }
 
@@ -312,72 +324,115 @@ class LossOfMassTubularPageState extends State<LossOfMassTubularPage> {
         ? _calculatedResults[index] as SampleCalculationData
         : null;
 
-return Center(
-    child: Card(
-      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
-      elevation: 1.0,
-      color: const Color(0xFFFFEBEB),
-      child: Container( // Use a container to set a max width on the content
-      constraints: const BoxConstraints(maxWidth: 500),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    // --- MODIFIED: Adhering to original request structure ---
+    return Center(
+      child: Card(
+        margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+        elevation: 1.0,
+        color: const Color(0xFFFFEBEB),
+        child: Container( // Using Container for max width as requested
+          constraints: const BoxConstraints(maxWidth: 500),
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Sample ${index + 1}', style: const TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold)),
-                if (_sampleControllers.length > 1)
-                  IconButton(
-                    icon: Icon(Icons.remove_circle_outline, color: Colors.red.shade700),
-                    tooltip: 'Remove Sample ${index + 1}',
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    onPressed: () => _removeSample(index),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Sample ${index + 1}', style: const TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold)),
+                    if (_sampleControllers.length > 1)
+                      IconButton(
+                        icon: Icon(Icons.remove_circle_outline, color: Colors.red.shade700),
+                        tooltip: 'Remove Sample ${index + 1}',
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: () => _removeSample(index),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 12.0),
+                Row(
+                  children: [
+                    Expanded(child: _buildTextField(label: 'Outer Diameter (mm)', controller: controllers.outerDiameterController)),
+                    const SizedBox(width: 20.0),
+                    Expanded(child: _buildTextField(label: 'Avg. Thickness (mm)', controller: controllers.avgThicknessController)),
+                  ],
+                ),
+                const SizedBox(height: 10.0),
+                Row(
+                  children: [
+                    Expanded(child: _buildTextField(label: 'Length (mm)', controller: controllers.lengthController)),
+                  ],
+                ),
+                const SizedBox(height: 10.0),
+                Card(
+                  color: const Color.fromARGB(255, 255, 218, 218),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(12.0, 12.0, 12.0, 8.0),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            // --- MODIFIED: Text styling as requested ---
+                            Text('Weight', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+                            SizedBox(
+                              width: 75,
+                              height: 40,
+                              child: DropdownButtonFormField<String>(
+                                decoration: const InputDecoration(
+                                  border: OutlineInputBorder(),
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                ),
+                                value: _selectedWeightUnit,
+                                items: ['mg', 'g'].map((String value) {
+                                  return DropdownMenuItem<String>(
+                                    value: value,
+                                    child: Text(value, style: const TextStyle(fontSize: 14.0)),
+                                  );
+                                }).toList(), // .toList() is kept as it's required by the widget
+                                onChanged: (val) {
+                                  setState(() {
+                                    _selectedWeightUnit = val!;
+                                    _showResultTab = false;
+                                    _calculationError = null;
+                                  });
+                                },
+                              ),
+                            )
+                          ],
+                        ),
+                        const SizedBox(height: 12.0),
+                        Row(
+                          children: [
+                            Expanded(child: _buildTextField(label: 'Initial', controller: controllers.iniWeightController)),
+                            const SizedBox(width: 20.0),
+                            Expanded(child: _buildTextField(label: 'Final', controller: controllers.finWeightController)),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
+                ),
+                if (resultData != null) ...[
+                  const Divider(height: 20, thickness: 1),
+                  Text(
+                    'Weight Difference: ${resultData.weightDiff.toStringAsFixed(3)} mg',
+                    style: const TextStyle(fontSize: 13, color: Colors.black87),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Nearest Whole Number: ${resultData.weightDiffNearest} mg',
+                    style: const TextStyle(fontSize: 13, color: Colors.black87),
+                  ),
+                ]
               ],
             ),
-            const SizedBox(height: 12.0),
-            Row(
-              children: [
-                Expanded(child: _buildTextField(label: 'Outer Diameter (mm)', controller: controllers.outerDiameterController)),
-                const SizedBox(width: 20.0),
-                Expanded(child: _buildTextField(label: 'Avg. Thickness (mm)', controller: controllers.avgThicknessController)),
-              ],
-            ),
-            const SizedBox(height: 10.0),
-            Row(
-              children: [
-                Expanded(child: _buildTextField(label: 'Length (mm)', controller: controllers.lengthController)),
-              ],
-            ),
-            const SizedBox(height: 10.0),
-            Row(
-              children: [
-                Expanded(child: _buildTextField(label: 'Initial Weight (mg)', controller: controllers.iniWeightController)),
-                const SizedBox(width: 20.0),
-                Expanded(child: _buildTextField(label: 'Final Weight (mg)', controller: controllers.finWeightController)),
-              ],
-            ),
-            // --- MODIFIED: Display both weight difference results per sample ---
-            if (resultData != null) ...[
-              const Divider(height: 20, thickness: 1),
-              Text(
-                'Weight Difference: ${resultData.weightDiff.toStringAsFixed(3)} mg',
-                style: const TextStyle(fontSize: 13, color: Colors.black87),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Weight Difference (to nearest mg): ${resultData.weightDiffNearest} mg',
-                style: const TextStyle(fontSize: 13, color: Colors.black87),
-              ),
-            ]
-          ],
+          ),
         ),
       ),
-      )
-    )
     );
   }
 
@@ -469,7 +524,7 @@ return Center(
                                 Text(_calculationError!, style: errorStyle)
                               else ...[
                                 const Text(
-                                  'Overall Test Results',
+                                  'Overall Test Results:',
                                   style: boldStyle
                                 ),
                                 const SizedBox(height: 8),

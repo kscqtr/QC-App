@@ -51,6 +51,10 @@ class LossOfMassDumbbellPageState extends State<LossOfMassDumbbellPage> {
   final int _maxSamples = 6;
   final ScrollController _scrollController = ScrollController();
 
+  // --- NEW: State variable for weight units ---
+  String _selectedWeightUnit = 'mg';
+
+
   @override
   void initState() {
     super.initState();
@@ -64,6 +68,7 @@ class LossOfMassDumbbellPageState extends State<LossOfMassDumbbellPage> {
     _sampleControllers = [LossOfMassSampleControllers()];
     _calculatedResults = [];
     _overallResults = {};
+    _selectedWeightUnit = 'mg'; // Reset to default
   }
 
   @override
@@ -171,7 +176,18 @@ class LossOfMassDumbbellPageState extends State<LossOfMassDumbbellPage> {
         break;
       }
 
-      double weightDiff = initialWeight! - finalWeight!;
+      // --- NEW: Convert weights to mg if 'g' is selected ---
+      double initialWeightMg = initialWeight!;
+      if (_selectedWeightUnit == 'g') {
+        initialWeightMg *= 1000;
+      }
+
+      double finalWeightMg = finalWeight!;
+      if (_selectedWeightUnit == 'g') {
+        finalWeightMg *= 1000;
+      }
+
+      double weightDiff = initialWeightMg - finalWeightMg;
       int weightDiffNearest = weightDiff.round();
 
       final sampleData = SampleCalculationData(
@@ -236,6 +252,7 @@ class LossOfMassDumbbellPageState extends State<LossOfMassDumbbellPage> {
       _calculatedResults = [];
       _calculationError = null;
       _showResultTab = false;
+      _selectedWeightUnit = 'mg';
     });
   }
 
@@ -268,78 +285,109 @@ class LossOfMassDumbbellPageState extends State<LossOfMassDumbbellPage> {
         ? _calculatedResults[index] as SampleCalculationData
         : null;
 
-    // --- MODIFIED: The Card is now wrapped in Center and its content is constrained ---
     return Center(
       child: Card(
         margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
         elevation: 1.0,
         color: const Color(0xFFFFEBEB),
-        child: Container( // Use a container to set a max width on the content
+        child: Container(
           constraints: const BoxConstraints(maxWidth: 500),
-          padding: const EdgeInsets.all(12.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Sample ${index + 1}', style: const TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold)),
-                  if (_sampleControllers.length > 1)
-                    IconButton(
-                      icon: Icon(Icons.remove_circle_outline, color: Colors.red.shade700),
-                      tooltip: 'Remove Sample ${index + 1}',
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      onPressed: () => _removeSample(index),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 12.0),
-              // This Row now contains a single Expanded TextField, making it centered
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: _buildTextField(
-                      label: firstFieldLabel, 
-                      controller: controllers.thicknessController
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10.0),
-              // This Row uses Expanded to make the fields share space equally
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: _buildTextField(
-                      label: 'Initial Weight (g)', 
-                      controller: controllers.iniWeightController
-                    ),
-                  ),
-                  const SizedBox(width: 20.0),
-                  Expanded(
-                    child: _buildTextField(
-                      label: 'Final Weight (g)', 
-                      controller: controllers.finWeightController
-                    ),
-                  ),
-                ],
-              ),
-              if (resultData != null) ...[
-                const Divider(height: 20, thickness: 1),
-                Text(
-                  'Weight Difference: ${resultData.weightDiff.toStringAsFixed(3)} g',
-                  style: const TextStyle(fontSize: 13, color: Colors.black87),
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Sample ${index + 1}', style: const TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold)),
+                    if (_sampleControllers.length > 1)
+                      IconButton(
+                        icon: Icon(Icons.remove_circle_outline, color: Colors.red.shade700),
+                        tooltip: 'Remove Sample ${index + 1}',
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: () => _removeSample(index),
+                      ),
+                  ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'Nearest Whole Number: ${resultData.weightDiffNearest} g',
-                  style: const TextStyle(fontSize: 13, color: Colors.black87),
+                const SizedBox(height: 12.0),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: _buildTextField(
+                        label: firstFieldLabel, 
+                        controller: controllers.thicknessController
+                      ),
+                    ),
+                  ],
                 ),
-              ]
-            ],
+                const SizedBox(height: 10.0),
+                // --- MODIFIED: Using the grouped card for weight inputs ---
+                Card(
+                  color: const Color.fromARGB(255, 255, 218, 218),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(12.0, 12.0, 12.0, 8.0),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Weight', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+                            SizedBox(
+                              width: 75,
+                              height: 40,
+                              child: DropdownButtonFormField<String>(
+                                decoration: const InputDecoration(
+                                  border: OutlineInputBorder(),
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                ),
+                                value: _selectedWeightUnit,
+                                items: ['mg', 'g'].map((String value) {
+                                  return DropdownMenuItem<String>(
+                                    value: value,
+                                    child: Text(value, style: const TextStyle(fontSize: 14.0)),
+                                  );
+                                }).toList(),
+                                onChanged: (val) {
+                                  setState(() {
+                                    _selectedWeightUnit = val!;
+                                    _showResultTab = false;
+                                    _calculationError = null;
+                                  });
+                                },
+                              ),
+                            )
+                          ],
+                        ),
+                        const SizedBox(height: 12.0),
+                        Row(
+                          children: [
+                            Expanded(child: _buildTextField(label: 'Initial', controller: controllers.iniWeightController)),
+                            const SizedBox(width: 20.0),
+                            Expanded(child: _buildTextField(label: 'Final', controller: controllers.finWeightController)),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                if (resultData != null) ...[
+                  const Divider(height: 20, thickness: 1),
+                  Text(
+                    'Weight Difference: ${resultData.weightDiff.toStringAsFixed(3)} mg',
+                    style: const TextStyle(fontSize: 13, color: Colors.black87),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Nearest Whole Number: ${resultData.weightDiffNearest} mg',
+                    style: const TextStyle(fontSize: 13, color: Colors.black87),
+                  ),
+                ]
+              ],
+            ),
           ),
         ),
       ),
@@ -449,7 +497,7 @@ class LossOfMassDumbbellPageState extends State<LossOfMassDumbbellPage> {
                                       ],
                                     ),
                                   );
-                                })
+                                }),
                               ]
                             ],
                           ),
