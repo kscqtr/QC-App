@@ -139,7 +139,7 @@ class ConductorResistancePageState extends State<ConductorResistancePage> {
 
         if (calculatedValue <= crMaxValue) {
           _comparisonText =
-              'Pass. \n\nCalculated CR: ${calculatedValue.toStringAsFixed(decimalnum + 1)} Ω/km. \n\nThe specification maximum is ${crMaxValue.toStringAsFixed(decimalnum)} Ω/km for a $_selectedCableSizeKey cable.';
+              'Pass. \n\nCalculated CR: ${calculatedValue.toStringAsFixed(decimalnum)} Ω/km. \n\nThe specification maximum is ${crMaxValue.toStringAsFixed(decimalnum)} Ω/km for a $_selectedCableSizeKey cable.';
           _comparisonColor = Colors.green;
           _isPass = true;
         } else {
