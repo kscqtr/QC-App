@@ -75,7 +75,7 @@ class ConductorResistancePageState extends State<ConductorResistancePage> {
     double? input3 = _temperatureValues[_selectedTemperatureKey];
     double? input4 = _activeCableSizeMap[_selectedCableSizeKey];
 
-    if (input1 != null && input2 != null && input3 != null && _selectedCableClass != null && _selectedCableSizeKey != null && input4 != null) {
+    if (input1 != null && input2 != null && input3 != null) {
       double length = input1;
       if (_selectedLengthUnit == 'm') length /= 1000;
       if (length == 0) {
@@ -90,36 +90,56 @@ class ConductorResistancePageState extends State<ConductorResistancePage> {
       double resistance = input2;
       if (_selectedRUnit == 'mΩ') resistance /= 1000;
 
-      int decimalnum = _getDecimalPlaces(input4.toString()).clamp(0, 20);
-
       double product = (resistance * input3) / length;
-      
-      bool isPass = product <= input4;
-      
-      // --- NEW: Construct the formula string to be displayed ---
       String formulaString = '(${resistance.toString()} * ${input3.toString()}) / ${length.toString()}';
-      
-      setState(() {
-        _isPass = isPass;
-        _resultsMap = {
-          'Calculation': formulaString, // Add the formula string here
-          'Calculated CR': '${product.toStringAsFixed(decimalnum)} Ω/km',
-          'Specification Max': '${input4.toStringAsFixed(decimalnum)} Ω/km',
-          'Result': isPass ? 'Pass' : 'Fail',
-        };
-        _showResultTab = true;
-      });
 
+      if (input4 != null) {
+        bool isPass = product <= input4;
+        int decimalnum = _getDecimalPlaces(input4.toString()).clamp(0, 20);
+
+        setState(() {
+          _isPass = isPass;
+          _resultsMap = {
+            'Calculation': formulaString,
+            'Calculated CR': '${product.toStringAsFixed(decimalnum)} Ω/km',
+            'Specification Max': '${input4.toStringAsFixed(decimalnum)} Ω/km',
+            'Result': isPass ? 'Pass' : 'Fail',
+          };
+          _showResultTab = true;
+        });
+      } else {
+        setState(() {
+          _isPass = true;
+          _resultsMap = {
+            'Calculation': formulaString,
+            'Calculated CR': '${product.toStringAsFixed(4)} Ω/km',
+            'Specification Max': '-',
+            'Result': '-',
+          };
+          _showResultTab = true;
+        });
+      }
     } else {
+      // --- MODIFIED: This block now also shows a SnackBar pop-up ---
+      String errorMsg;
+      if (input2 == null) {
+        errorMsg = 'Please enter valid Resistance.';
+      } else if (input1 == null) {
+        errorMsg = 'Please enter valid Length.';
+      } else {
+        errorMsg = 'Please select Temperature.';
+      }
+
+      // Show the pop-up error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMsg),
+          backgroundColor: Colors.red.shade700,
+        ),
+      );
+      
+      // Also display the error in the results box
       setState(() {
-        String errorMsg = 'Please enter valid numbers and select all options.';
-         if (input4 == null && _selectedCableSizeKey != null) errorMsg = 'Max CR value missing for selected size/class.';
-         if (_selectedCableSizeKey == null) errorMsg = 'Please select Cable Size.';
-         if (_selectedCableClass == null) errorMsg = 'Please select Cable Class.';
-         if (_selectedTemperatureKey == null) errorMsg = 'Please select Temperature.';
-         if (input1 == null) errorMsg = 'Please enter valid Length.';
-         if (input2 == null) errorMsg = 'Please enter valid Resistance.';
-        
         _resultsMap = {'Error': errorMsg};
         _isPass = false;
         _showResultTab = true;
@@ -315,13 +335,8 @@ class ConductorResistancePageState extends State<ConductorResistancePage> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           ElevatedButton.icon(
-                            onPressed: (_input1Controller.text.isNotEmpty &&
-                                    _input2Controller.text.isNotEmpty &&
-                                    _selectedTemperatureKey != null &&
-                                    _selectedCableClass != null &&
-                                    _selectedCableSizeKey != null)
-                                ? _calculateProduct
-                                : null,
+                            // --- MODIFIED: Button is now always pressable ---
+                            onPressed: _calculateProduct,
                             icon: const Icon(Icons.calculate),
                             label: const Text('Calculate CR'),
                             style: ElevatedButton.styleFrom(minimumSize: const Size(150, 45)),
@@ -363,7 +378,6 @@ class ConductorResistancePageState extends State<ConductorResistancePage> {
                                 _resultsMap.containsKey('Error') ? 'Error:' : 'Results:',
                                 style: _resultsMap.containsKey('Error') ? errorStyle : boldStyle,
                               ),
-                              // --- MODIFIED: Logic to display formula and results ---
                               if (_resultsMap.containsKey('Calculation')) ...[
                                 const SizedBox(height: 8),
                                 Text('Calculation: ${_resultsMap['Calculation']}', style: resultValueStyle),
