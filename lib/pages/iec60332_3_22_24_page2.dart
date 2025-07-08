@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+// --- MODIFIED: Import the first page to get the enum definition ---
+import 'iec60332_3_22_24_page.dart';
 
-// Enum for IEC Test Types
-enum IECTestType { iEC60332_3_22, iEC60332_3_24 }
+// --- REMOVED: Duplicate enum definition ---
 
 // Helper class to hold controllers for each material's inputs
 class IECSampleControllers {
@@ -84,7 +85,13 @@ class IEC24Results {
 
 class IEC60332Page2 extends StatefulWidget {
   final double calculatedTestPiecesFromPage1;
-  const IEC60332Page2({super.key, required this.calculatedTestPiecesFromPage1,});
+  final IECTestType selectedIECType;
+
+  const IEC60332Page2({
+    super.key, 
+    required this.calculatedTestPiecesFromPage1,
+    required this.selectedIECType,
+  });
 
   @override
   IEC60332Page2State createState() => IEC60332Page2State();
@@ -92,7 +99,7 @@ class IEC60332Page2 extends StatefulWidget {
 }
 
 class IEC60332Page2State extends State<IEC60332Page2> {
-  IECTestType _selectedIECType = IECTestType.iEC60332_3_22;
+  late IECTestType _selectedIECType;
   List<IECSampleControllers> _sampleControllers = [IECSampleControllers()];
   List<dynamic> _calculatedResults = [];
   String? _calculationError;
@@ -107,6 +114,7 @@ class IEC60332Page2State extends State<IEC60332Page2> {
   @override
   void initState() {
     super.initState();
+    _selectedIECType = widget.selectedIECType;
     _initializeSamplesAndResults();
   }
 
@@ -160,8 +168,8 @@ class IEC60332Page2State extends State<IEC60332Page2> {
       final double calculatedTestPiecesFromPage1 = widget.calculatedTestPiecesFromPage1;
       
       String determinedFormation = "N/A"; // Default value
-      String determinedLadder = "N/A";    // Default value
-      String determinedArray = "N/A";    // Default value
+      String determinedLadder = "N/A";     // Default value
+      String determinedArray = "N/A";      // Default value
       String determinedWireSizeDesc = "N/A"; // Default value
       String determinedBurner = "N/A";   // Default value
       double testPieces = calculatedTestPiecesFromPage1;
@@ -188,7 +196,7 @@ class IEC60332Page2State extends State<IEC60332Page2> {
         errorMsg = 'Invalid Overall Diameter (Entry ${i + 1}).';
       } else if (conductorKey == null || diameterText.isEmpty) {
          if (tempResults[i] != "SKIPPED") {
-             errorMsg = 'Conductor and Overall Diameter required for Entry ${i + 1}.';
+            errorMsg = 'Conductor and Overall Diameter required for Entry ${i + 1}.';
          }
       } else if (diameterOD != null) {
         if (diameterOD <= 0) {
@@ -201,9 +209,9 @@ class IEC60332Page2State extends State<IEC60332Page2> {
         tempResults[i] = null;
       } else if (conductorKey != null && diameterOD != null) {
         // Nested IF logic based on Conductor and Diameter
-        if (conductorKey == '≤ 35mm²') {    // ≤ 35mm²
+        if (conductorKey == '≤ 35mm²') {   // ≤ 35mm²
           determinedFormation = "Touching"; 
-          determinedLadder = "300mm";    
+          determinedLadder = "300mm";   
           determinedArray = '';
           actualTestPiece = (300 / diameterOD).ceilToDouble(); 
           int remaining = testPieces.toInt();
@@ -240,9 +248,9 @@ class IEC60332Page2State extends State<IEC60332Page2> {
 
         } else if (conductorKey == '≥ 50mm²')  {    // ≥ 50mm²
 
-          if (diameterOD > 40.0) {          // ≥ 50mm² & > 40.0mm
+          if (diameterOD > 40.0) {        // ≥ 50mm² & > 40.0mm
             determinedFormation = "Spacing"; 
-            determinedLadder = "300mm";   
+            determinedLadder = "300mm";  
             determinedWireSizeDesc = "0.5 - 1.0 mm";
             determinedBurner = "Single";
 
@@ -256,15 +264,14 @@ class IEC60332Page2State extends State<IEC60332Page2> {
               determinedBurner = "Double";
             }
 
-            if (diameterOD > 50.0) {       // ≥ 50mm² & > 50.0mm
-              determinedWireSizeDesc = "1.0 - 2.5 mm";
-            }
-
-            if (actualTestPiece > testPieces) {
-              actualTestPiece = testPieces; // Ensure we don't exceed the test pieces
-              determinedArray = actualTestPiece.toStringAsFixed(0);
+          if (actualTestPiece > testPieces) {
+            actualTestPiece = testPieces; // Ensure we don't exceed the test pieces
+            determinedArray = actualTestPiece.toStringAsFixed(0);
             }   
 
+            if (diameterOD > 50.0) {      // ≥ 50mm² & > 50.0mm
+              determinedWireSizeDesc = "1.0 - 2.5 mm";
+            }
           } else { // Diameter is <= 40.0
             determinedFormation = "Spacing"; 
             determinedLadder = "300mm";   
@@ -281,7 +288,7 @@ class IEC60332Page2State extends State<IEC60332Page2> {
               determinedBurner = "Double";
             }   
 
-            if (diameterOD > 50.0) {       // ≥ 50mm² & > 50.0mm
+            if (diameterOD > 50.0) {      // ≥ 50mm² & > 50.0mm
               determinedWireSizeDesc = "1.0 - 2.5 mm";
             }
 
@@ -289,12 +296,11 @@ class IEC60332Page2State extends State<IEC60332Page2> {
               actualTestPiece = testPieces; // Ensure we don't exceed the test pieces
               determinedArray = actualTestPiece.toStringAsFixed(0);
             }   
-
           }
         } else {
-           firstErrorMsg ??= "Unknown conductor type: $conductorKey (Entry ${i+1})";
-           tempResults[i] = null; 
-           continue; 
+            firstErrorMsg ??= "Unknown conductor type: $conductorKey (Entry ${i+1})";
+            tempResults[i] = null; 
+            continue; 
         }
             
         String duration = (_selectedIECType == IECTestType.iEC60332_3_22) ? "40 minutes" : "20 minutes";
@@ -312,7 +318,7 @@ class IEC60332Page2State extends State<IEC60332Page2> {
             totalTestPieces: testPieces,
           );
         } else { // IECTestType.iEC60332_3_24
-           tempResults[i] = IEC24Results( 
+            tempResults[i] = IEC24Results( 
             conductor: conductorKey,
             diameter: '${diameterOD.toStringAsFixed(2)} mm', 
             duration: duration,
@@ -364,7 +370,8 @@ class IEC60332Page2State extends State<IEC60332Page2> {
       _calculationError = null;
       _showResultTab = false;
       if (resetType) {
-        _selectedIECType = IECTestType.iEC60332_3_22; 
+        // When resetting, it should revert to the type passed from page 1
+        _selectedIECType = widget.selectedIECType; 
       }
     });
   }
@@ -453,8 +460,6 @@ class IEC60332Page2State extends State<IEC60332Page2> {
     const normalStyle = TextStyle(fontSize: 15, color: Colors.black87);
     final errorStyle = boldStyle.copyWith(color: Colors.red.shade700, fontSize: 16);
     final resultValueStyle = normalStyle.copyWith(fontSize: 14);
-    // final resultLabelStyle = normalStyle.copyWith(fontSize: 14, fontWeight: FontWeight.w500); // This was unused
-
 
     return Scaffold(
       appBar: AppBar(title: const Text('IEC 60332-3-22/24 Details')),
@@ -624,13 +629,13 @@ class IEC60332Page2State extends State<IEC60332Page2> {
                                                   if (conductor == "≤ 35mm²")
                                                     Text('Array: $array', style: resultValueStyle),
 
-                                                  if (conductor == "≥ 50mm²")       
+                                                  if (conductor == "≥ 50mm²")     
                                                     Text('Actual # Test Pieces: $array', style: resultValueStyle),
                                                 ],
                                               ),
                                             ),
-                                            if (index < _calculatedResults.length -1 && _calculatedResults.skip(index+1).any((r) => r != null && r != "SKIPPED"))
-                                               const Divider(height: 12, thickness: 0.5, indent: 8, endIndent: 8),
+                                           if (index < _calculatedResults.length -1 && _calculatedResults.skip(index+1).any((r) => r != null && r != "SKIPPED"))
+                                                const Divider(height: 12, thickness: 0.5, indent: 8, endIndent: 8),
                                           ],
                                         ),
                                       );

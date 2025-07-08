@@ -236,6 +236,7 @@ class IEC60332PageState extends State<IEC60332Page> {
       MaterialPageRoute(
         builder: (context) => IEC60332Page2(
           calculatedTestPiecesFromPage1: _calculatedTestPiecesPage2, 
+          selectedIECType: _selectedIECType,
         ),
       ),
     );
@@ -292,7 +293,7 @@ class IEC60332PageState extends State<IEC60332Page> {
       if (initialData == null) {
           // If the original entry was skipped or invalid, reflect that.
           if (_sampleControllers[i].selectedMaterialKey == null && _sampleControllers[i].weightController.text.isEmpty) {
-              if (_sampleControllers.length > 1) finalResults[i] = "SKIPPED";
+             if (_sampleControllers.length > 1) finalResults[i] = "SKIPPED";
           }
           continue;
       }
@@ -545,12 +546,12 @@ class IEC60332PageState extends State<IEC60332Page> {
                   children: [
                     ElevatedButton.icon(
                         onPressed: _performCalculations,
-                        icon: const Icon(Icons.calculate),
-                        label: const Text('Calculate'),
+                        icon: const Icon(Icons.calculate), 
+                        label: const Text('Calculate'), 
                         style: ElevatedButton.styleFrom(
                             backgroundColor: Theme.of(context).primaryColor,
                             foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                            minimumSize: const Size(110, 45))),
+                            minimumSize: const Size(110, 45))), 
                     const SizedBox(width: 8),
                     ElevatedButton.icon(
                         onPressed: () => _resetFields(resetType: true), 
@@ -585,7 +586,7 @@ class IEC60332PageState extends State<IEC60332Page> {
                             foregroundColor: Colors.white,
                             minimumSize: const Size(140, 45),
                         ),
-                       ),
+                        ),
                   ],
                 ),
                 const SizedBox(height: 30),
@@ -687,8 +688,8 @@ class IEC60332PageState extends State<IEC60332Page> {
                                                 ],
                                               ),
                                             ),
-                                            if (index < _calculatedResults.length -1 && _calculatedResults.skip(index+1).any((r) => r != null && r != "SKIPPED"))
-                                               const Divider(height: 10, thickness: 0.5),
+                                           if (index < _calculatedResults.length -1 && _calculatedResults.skip(index+1).any((r) => r != null && r != "SKIPPED"))
+                                                const Divider(height: 10, thickness: 0.5),
                                           ],
                                         ),
                                       );
@@ -728,7 +729,7 @@ class IEC60332PageState extends State<IEC60332Page> {
                                       crossAxisAlignment: CrossAxisAlignment.start, 
                                       children: [
                                         if (_totalVolumeDisplay.isEmpty && _calculatedResults.any((r) => r != null && r != "SKIPPED"))
-                                           const Divider(height: 10, thickness: 0.8, color: Colors.blueGrey),
+                                          const Divider(height: 10, thickness: 0.8, color: Colors.blueGrey),
                                         Text( 
                                           '$_testPiecesPerTotalVolumeDisplay pcs x 3.5m',
                                           style: boldStyle.copyWith(fontSize: 15, color: Theme.of(context).primaryColorDark), 

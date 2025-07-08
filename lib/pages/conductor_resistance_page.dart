@@ -11,11 +11,9 @@ class ConductorResistancePage extends StatefulWidget {
 class ConductorResistancePageState extends State<ConductorResistancePage> {
   final TextEditingController _input1Controller = TextEditingController(); // Length L
   final TextEditingController _input2Controller = TextEditingController(); // Resistance R
-  String? _result; // Stores the calculated "X = Y Ω/km" string
-  bool _showCalculationTab = false;
-  bool _showComparisonTab = false;
-  String _comparisonText = '';
-  Color _comparisonColor = Colors.black;
+  
+  Map<String, String> _resultsMap = {};
+  bool _showResultTab = false;
   bool _isPass = true;
 
   // Dropdown values for units
@@ -44,28 +42,22 @@ class ConductorResistancePageState extends State<ConductorResistancePage> {
     "800.0": 0.0221, "1000.0": 0.0176,
   };
   final Map<String, double> _cableSizeValuesClass5 = {
-     "#23": 25.08, "#40": 14.42, "#70": 8.242, "#110": 5.247, "#162": 3.561,
-     "0.5": 39.0, "0.75": 26.0, "1.0": 19.5, "1.5": 13.3, "2.5": 7.98,
-     "4.0": 4.95, "6.0": 3.30, "10.0": 1.91, "16.0": 1.21, "25.0": 0.780,
-     "35.0": 0.554, "50.0": 0.386, "70.0": 0.272, "95.0": 0.206, "120.0": 0.161,
-     "150.0": 0.129, "185.0": 0.106, "240.0": 0.0801, "300.0": 0.0641, "400.0": 0.0486,
-     "500.0": 0.0384, "630.0": 0.0287,
+      "#23": 25.08, "#40": 14.42, "#70": 8.242, "#110": 5.247, "#162": 3.561,
+      "0.5": 39.0, "0.75": 26.0, "1.0": 19.5, "1.5": 13.3, "2.5": 7.98,
+      "4.0": 4.95, "6.0": 3.30, "10.0": 1.91, "16.0": 1.21, "25.0": 0.780,
+      "35.0": 0.554, "50.0": 0.386, "70.0": 0.272, "95.0": 0.206, "120.0": 0.161,
+      "150.0": 0.129, "185.0": 0.106, "240.0": 0.0801, "300.0": 0.0641, "400.0": 0.0486,
+      "500.0": 0.0384, "630.0": 0.0287,
   };
   final Map<String, double> _cableSizeValuesOthers = {
-     "0.6 MM": 65.4, "0.9 MM": 29.1, "14 AWG": 8.45, "16 AWG": 13.5, "18 AWG": 21.4,
-     "20 AWG": 33.9, "22 AWG": 54.3, "23 AWG": 67.9, "24 AWG": 85.9,
+      "0.6 MM": 65.4, "0.9 MM": 29.1, "14 AWG": 8.45, "16 AWG": 13.5, "18 AWG": 21.4,
+      "20 AWG": 33.9, "22 AWG": 54.3, "23 AWG": 67.9, "24 AWG": 85.9,
   };
 
-  // Variable to hold the currently active map
   Map<String, double> _activeCableSizeMap = {};
-
-  // Selected key for cable size dropdown (now String)
   String? _selectedCableSizeKey;
-  // Selected key for temperature dropdown
   double? _selectedTemperatureKey;
 
-
-  // Helper function to get decimal places from a string representation of a number
   int _getDecimalPlaces(String numberString) {
     if (!numberString.contains('.')) {
       return 0;
@@ -87,27 +79,37 @@ class ConductorResistancePageState extends State<ConductorResistancePage> {
       double length = input1;
       if (_selectedLengthUnit == 'm') length /= 1000;
       if (length == 0) {
-         setState(() { _result = 'Length cannot be zero.'; _showCalculationTab = false; _showComparisonTab = false; });
-         return;
+          setState(() { 
+            _resultsMap = {'Error': 'Length cannot be zero.'}; 
+            _isPass = false;
+            _showResultTab = true; 
+          });
+          return;
       }
 
       double resistance = input2;
       if (_selectedRUnit == 'mΩ') resistance /= 1000;
 
-      int decimalnum = 0;
-      String valueStringForResult = input4.toString();
-      if (valueStringForResult.contains('.')) {
-        decimalnum = _getDecimalPlaces(valueStringForResult);
-      }
-      decimalnum = decimalnum.clamp(0, 20);
+      int decimalnum = _getDecimalPlaces(input4.toString()).clamp(0, 20);
 
       double product = (resistance * input3) / length;
+      
+      bool isPass = product <= input4;
+      
+      // --- NEW: Construct the formula string to be displayed ---
+      String formulaString = '(${resistance.toString()} * ${input3.toString()}) / ${length.toString()}';
+      
       setState(() {
-        _result = '${product.toStringAsFixed(decimalnum)} Ω/km';
-        _showCalculationTab = true;
-        _showComparisonTab = true;
-        _compareResults(product);
+        _isPass = isPass;
+        _resultsMap = {
+          'Calculation': formulaString, // Add the formula string here
+          'Calculated CR': '${product.toStringAsFixed(decimalnum)} Ω/km',
+          'Specification Max': '${input4.toStringAsFixed(decimalnum)} Ω/km',
+          'Result': isPass ? 'Pass' : 'Fail',
+        };
+        _showResultTab = true;
       });
+
     } else {
       setState(() {
         String errorMsg = 'Please enter valid numbers and select all options.';
@@ -117,47 +119,13 @@ class ConductorResistancePageState extends State<ConductorResistancePage> {
          if (_selectedTemperatureKey == null) errorMsg = 'Please select Temperature.';
          if (input1 == null) errorMsg = 'Please enter valid Length.';
          if (input2 == null) errorMsg = 'Please enter valid Resistance.';
-        _result = errorMsg;
-        _showCalculationTab = false;
-        _showComparisonTab = false;
+        
+        _resultsMap = {'Error': errorMsg};
+        _isPass = false;
+        _showResultTab = true;
       });
     }
     FocusScope.of(context).unfocus();
-  }
-
-  void _compareResults(double calculatedValue) {
-    if (_selectedCableSizeKey != null) {
-      double? crMaxValue = _activeCableSizeMap[_selectedCableSizeKey];
-
-      if (crMaxValue != null) {
-        int decimalnum = 0;
-        String valueString = crMaxValue.toString();
-        if (valueString.contains('.')) {
-           decimalnum = _getDecimalPlaces(valueString);
-        }
-        decimalnum = decimalnum.clamp(0, 20);
-
-        if (calculatedValue <= crMaxValue) {
-          _comparisonText =
-              'Pass. \n\nCalculated CR: ${calculatedValue.toStringAsFixed(decimalnum)} Ω/km. \n\nThe specification maximum is ${crMaxValue.toStringAsFixed(decimalnum)} Ω/km for a $_selectedCableSizeKey cable.';
-          _comparisonColor = Colors.green;
-          _isPass = true;
-        } else {
-          _comparisonText =
-              'Fail. \n\nCalculated CR: ${calculatedValue.toStringAsFixed(decimalnum)} Ω/km. \n\nThe specification maximum is ${crMaxValue.toStringAsFixed(decimalnum)} Ω/km for a $_selectedCableSizeKey cable.';
-          _comparisonColor = Colors.red;
-          _isPass = false;
-        }
-      } else {
-        _comparisonText = 'Error: CR Max value not found in active map for selected size.';
-        _comparisonColor = Colors.black;
-        _isPass = false;
-      }
-    } else {
-      _comparisonText = 'Please select a cable size to compare.';
-      _comparisonColor = Colors.black;
-      _isPass = false;
-    }
   }
 
   void _resetFields() {
@@ -168,17 +136,19 @@ class ConductorResistancePageState extends State<ConductorResistancePage> {
       _selectedCableSizeKey = null;
       _selectedCableClass = null;
       _activeCableSizeMap = {};
-      _result = null;
-      _showCalculationTab = false;
-      _showComparisonTab = false;
-      _comparisonText = '';
-      _comparisonColor = Colors.black;
+      _resultsMap = {};
+      _showResultTab = false;
       _isPass = true;
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    const boldStyle = TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87);
+    final errorStyle = boldStyle.copyWith(color: Colors.red.shade700, fontSize: 16);
+    final resultLabelStyle = const TextStyle(fontSize: 15, color: Colors.black87).copyWith(fontSize: 14, fontWeight: FontWeight.w500);
+    final resultValueStyle = const TextStyle(fontSize: 15, color: Colors.black87).copyWith(fontSize: 14);
+
     return Scaffold(
       appBar: AppBar(title: const Text('Conductor Resistance Test')),
       body: Padding(
@@ -190,12 +160,11 @@ class ConductorResistancePageState extends State<ConductorResistancePage> {
               children: [
                 Padding(
                   padding: const EdgeInsets.only(top: 30.0),
-                  child: Column( // Changed outer Row to Column for vertical stacking of input groups
+                  child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Resistance Row
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.center, // Center items in row
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           SizedBox(
                             width: 180,
@@ -203,34 +172,33 @@ class ConductorResistancePageState extends State<ConductorResistancePage> {
                               controller: _input2Controller,
                               keyboardType: const TextInputType.numberWithOptions(decimal: true),
                               style: const TextStyle(fontSize: 15.0),
-                              decoration: InputDecoration( // Apply new style
+                              decoration: InputDecoration(
                                 labelText: 'R, Measured value:',
                                 labelStyle: const TextStyle(fontSize: 15.0),
                                 border: const OutlineInputBorder(),
                                 isDense: true,
                                 contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                               ),
-                              onChanged: (value) => setState(() { _showCalculationTab = false; _showComparisonTab = false; }),
+                              onChanged: (value) => setState(() { _showResultTab = false; }),
                             ),
                           ),
                           const SizedBox(width: 10),
                           SizedBox(
-                            width: 80, // Consistent width for unit dropdowns
-                            child: DropdownButtonFormField<String>( // Changed to DropdownButtonFormField
+                            width: 80,
+                            child: DropdownButtonFormField<String>(
                               decoration: const InputDecoration(
-                                 border: OutlineInputBorder(),
-                                 isDense: true,
-                                 contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8), // Adjusted padding
-                               ),
+                                  border: OutlineInputBorder(),
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                ),
                               value: _selectedRUnit,
-                              onChanged: (String? newValue) => setState(() { _selectedRUnit = newValue!; _showCalculationTab = false; _showComparisonTab = false; }),
+                              onChanged: (String? newValue) => setState(() { _selectedRUnit = newValue!; _showResultTab = false; }),
                               items: <String>['Ω', 'mΩ', '-'].map<DropdownMenuItem<String>>((String value) => DropdownMenuItem<String>(value: value, child: Text(value, style: const TextStyle(fontSize: 15.0)))).toList(),
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 20),
-                      // Length Row
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -240,38 +208,37 @@ class ConductorResistancePageState extends State<ConductorResistancePage> {
                               controller: _input1Controller,
                               keyboardType: const TextInputType.numberWithOptions(decimal: true),
                               style: const TextStyle(fontSize: 15.0),
-                              decoration: InputDecoration( // Apply new style
+                              decoration: InputDecoration(
                                 labelText: 'L, Length of cable:',
                                 labelStyle: const TextStyle(fontSize: 15.0),
                                 border: const OutlineInputBorder(),
                                 isDense: true,
                                 contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                               ),
-                              onChanged: (value) => setState(() { _showCalculationTab = false; _showComparisonTab = false; }),
+                              onChanged: (value) => setState(() { _showResultTab = false; }),
                             ),
                           ),
                           const SizedBox(width: 10),
                           SizedBox(
                             width: 80,
-                            child: DropdownButtonFormField<String>( // Changed to DropdownButtonFormField
+                            child: DropdownButtonFormField<String>(
                               decoration: const InputDecoration(
-                                 border: OutlineInputBorder(),
-                                 isDense: true,
-                                 contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                               ),
+                                  border: OutlineInputBorder(),
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                ),
                               value: _selectedLengthUnit,
-                              onChanged: (String? newValue) => setState(() { _selectedLengthUnit = newValue!; _showCalculationTab = false; _showComparisonTab = false; }),
+                              onChanged: (String? newValue) => setState(() { _selectedLengthUnit = newValue!; _showResultTab = false; }),
                               items: <String>['km', 'm'].map<DropdownMenuItem<String>>((String value) => DropdownMenuItem<String>(value: value, child: Text(value, style: const TextStyle(fontSize: 15.0)))).toList(),
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 20),
-                      // Temperature Row
-                      SizedBox( // Wrap in SizedBox for consistent width
-                        width: 270, // 180 (field) + 10 (space) + 80 (unit)
-                        child: DropdownButtonFormField<double>( // Changed to DropdownButtonFormField
-                          decoration: InputDecoration( // Apply new style
+                      SizedBox(
+                        width: 270,
+                        child: DropdownButtonFormField<double>(
+                          decoration: InputDecoration(
                             labelText: 'K, Temperature:',
                             labelStyle: const TextStyle(fontSize: 15.0),
                             border: const OutlineInputBorder(),
@@ -279,16 +246,14 @@ class ConductorResistancePageState extends State<ConductorResistancePage> {
                             contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                           ),
                           value: _selectedTemperatureKey,
-                          hint: const Text('Select Temperature', style: TextStyle(fontSize: 15.0, color: Colors.grey)), // Standard hint
+                          hint: const Text('Select Temperature', style: TextStyle(fontSize: 15.0, color: Colors.grey)),
                           isExpanded: true,
-                          onChanged: (double? newValue) => setState(() { _selectedTemperatureKey = newValue!; _showCalculationTab = false; _showComparisonTab = false; }),
+                          onChanged: (double? newValue) => setState(() { _selectedTemperatureKey = newValue!; _showResultTab = false; }),
                           items: _temperatureValues.keys.map<DropdownMenuItem<double>>((key) => DropdownMenuItem<double>(value: key, child: Text('$key °C', style: const TextStyle(fontSize: 15.0)))).toList(),
                         ),
                       ),
                       const SizedBox(height: 20),
-
-                      // Cable Class Dropdown
-                       SizedBox(
+                      SizedBox(
                         width: 270,
                         child: DropdownButtonFormField<String>(
                           decoration: InputDecoration(
@@ -309,8 +274,7 @@ class ConductorResistancePageState extends State<ConductorResistancePage> {
                               else if (_selectedCableClass == 'Class 5') {_activeCableSizeMap = _cableSizeValuesClass5;}
                               else if (_selectedCableClass == 'Others') {_activeCableSizeMap = _cableSizeValuesOthers;}
                               else {_activeCableSizeMap = {};}
-                              _showCalculationTab = false;
-                              _showComparisonTab = false;
+                              _showResultTab = false;
                             });
                           },
                           items: <String>['Class 2', 'Class 5', 'Others']
@@ -318,8 +282,6 @@ class ConductorResistancePageState extends State<ConductorResistancePage> {
                         ),
                       ),
                       const SizedBox(height: 20),
-
-                      // Cable Size Dropdown
                       SizedBox(
                         width: 270,
                         child: DropdownButtonFormField<String>(
@@ -331,35 +293,33 @@ class ConductorResistancePageState extends State<ConductorResistancePage> {
                             contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                           ),
                           value: _selectedCableSizeKey,
-                          hint: Text(_selectedCableClass == null ? 'Select Class first' : 'Select Size', style: TextStyle(fontSize: 15.0, color: Colors.grey)),
+                          hint: Text(_selectedCableClass == null ? 'Select Class first' : 'Select Size', style: const TextStyle(fontSize: 15.0, color: Colors.grey)),
                           isExpanded: true,
                           onChanged: (_selectedCableClass == null || _activeCableSizeMap.isEmpty) ? null : (String? newValue) {
                             setState(() {
                               _selectedCableSizeKey = newValue!;
-                              _showComparisonTab = false;
-                              _showCalculationTab = false;
+                              _showResultTab = false;
                             });
                           },
                           items: _activeCableSizeMap.keys
                               .map<DropdownMenuItem<String>>((String key) {
                                 return DropdownMenuItem<String>(
                                   value: key,
-                                  child: Text(key, style: const TextStyle(fontSize: 15.0)), // Display key directly
+                                  child: Text(key, style: const TextStyle(fontSize: 15.0)),
                                 );
                           }).toList(),
                         ),
                       ),
                       const SizedBox(height: 20),
-                      // Action Buttons Row
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           ElevatedButton.icon(
                             onPressed: (_input1Controller.text.isNotEmpty &&
-                                       _input2Controller.text.isNotEmpty &&
-                                       _selectedTemperatureKey != null &&
-                                       _selectedCableClass != null &&
-                                       _selectedCableSizeKey != null)
+                                    _input2Controller.text.isNotEmpty &&
+                                    _selectedTemperatureKey != null &&
+                                    _selectedCableClass != null &&
+                                    _selectedCableSizeKey != null)
                                 ? _calculateProduct
                                 : null,
                             icon: const Icon(Icons.calculate),
@@ -384,52 +344,60 @@ class ConductorResistancePageState extends State<ConductorResistancePage> {
                 ),
                 const SizedBox(height: 20),
 
-                // Output Boxes Section
-                if (_showCalculationTab)
-                  Container(
-                    width: 250, // Original width
-                    padding: const EdgeInsets.all(16.0,),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200], // Original color
-                      borderRadius: BorderRadius.circular(8.0),
-                      border: Border.all(color: Colors.grey),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Calculation:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 10),
-                        Text(
-                          '(${_selectedRUnit == 'mΩ' ? (double.tryParse(_input2Controller.text) ?? 0) / 1000 : _input2Controller.text} * ${_temperatureValues[_selectedTemperatureKey]}) / ${_selectedLengthUnit == 'm' ? (double.tryParse(_input1Controller.text) ?? 0) / 1000 : _input1Controller.text} \n= ${_result ?? 'Calculation not available'}',
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                      ],
-                    ),
-                  ),
-                if (_showComparisonTab)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 20.0),
-                    child: Container(
-                      width: 250, // Original width
-                      padding: const EdgeInsets.all(16.0),
-                      decoration: BoxDecoration(
-                        color: _isPass ? Colors.green[50] : Colors.red[50],
-                        borderRadius: BorderRadius.circular(8.0),
-                        border: Border.all(color: _isPass ? Colors.green : Colors.red),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Result:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 10),
-                          Text(
-                            _comparisonText,
-                            style: TextStyle(fontSize: 16, color: _comparisonColor),
+                AnimatedOpacity(
+                  opacity: _showResultTab ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 300),
+                  child: _showResultTab
+                      ? Container(
+                          constraints: const BoxConstraints(maxWidth: 380),
+                          padding: const EdgeInsets.all(16.0),
+                          decoration: BoxDecoration(
+                            color: _isPass ? Colors.green[50] : Colors.red[50],
+                            borderRadius: BorderRadius.circular(8.0),
+                            border: Border.all(color: _isPass ? Colors.green.shade300 : Colors.red.shade300),
                           ),
-                        ],
-                      ),
-                    ),
-                  ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _resultsMap.containsKey('Error') ? 'Error:' : 'Results:',
+                                style: _resultsMap.containsKey('Error') ? errorStyle : boldStyle,
+                              ),
+                              // --- MODIFIED: Logic to display formula and results ---
+                              if (_resultsMap.containsKey('Calculation')) ...[
+                                const SizedBox(height: 8),
+                                Text('Calculation: ${_resultsMap['Calculation']}', style: resultValueStyle),
+                                const Divider(height: 16, thickness: 1),
+                              ],
+                              ..._resultsMap.entries
+                                .where((entry) => entry.key != 'Calculation' && entry.key != 'Error')
+                                .map((entry) {
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 3.0),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text('${entry.key}:', style: resultLabelStyle),
+                                        Text(
+                                          entry.value, 
+                                          style: entry.key == 'Result' 
+                                            ? boldStyle.copyWith(color: _isPass ? Colors.green.shade800 : Colors.red.shade800)
+                                            : resultValueStyle,
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }),
+                              if (_resultsMap.containsKey('Error'))
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 8.0),
+                                  child: Text(_resultsMap['Error']!, style: errorStyle.copyWith(fontSize: 14)),
+                                ),
+                            ],
+                          ),
+                        )
+                      : const SizedBox.shrink(),
+                ),
               ],
             ),
           ),
