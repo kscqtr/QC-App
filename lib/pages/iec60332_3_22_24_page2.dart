@@ -1,12 +1,16 @@
+// ignore_for_file: avoid_web_libraries_in_flutter, deprecated_member_use
+import 'dart:html' as html; // For web-specific download
 import 'package:flutter/material.dart';
-// --- MODIFIED: Import the first page to get the enum definition ---
+import 'package:flutter/services.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+
 import 'iec60332_3_22_24_page.dart';
 
-// --- REMOVED: Duplicate enum definition ---
 
 // Helper class to hold controllers for each material's inputs
 class IECSampleControllers {
-  String? selectedConductorKey; // To store the key of the selected conductor (e.g., "≤ 35mm2")
+  String? selectedConductorKey; // To store the key of the selected conductor (e.g., "<= 35mm2")
   final TextEditingController diameterController; // For diameter input
 
   IECSampleControllers()
@@ -24,7 +28,7 @@ class IECSampleControllers {
 }
 
 // Result class for IEC60332-3-22 
-class IEC22Results {
+class IEC22ResultsPage2 { // Renamed to avoid conflict
   final String conductor;
   final String diameter; // Input diameter as string
   final String duration;
@@ -35,7 +39,7 @@ class IEC22Results {
   final String burner;
   final double totalTestPieces; // 7 or 1.5
 
-  IEC22Results({
+  IEC22ResultsPage2({
     required this.conductor,
     required this.diameter,
     required this.duration,
@@ -54,7 +58,7 @@ class IEC22Results {
 }
 
 // Result class for IEC60332-3-24
-class IEC24Results {
+class IEC24ResultsPage2 { // Renamed to avoid conflict
   final String conductor;
   final String diameter; // Input diameter as string
   final String duration;
@@ -65,7 +69,7 @@ class IEC24Results {
   final String burner;
   final double totalTestPieces; // 7 or 1.5
 
-  IEC24Results({
+  IEC24ResultsPage2({
     required this.conductor,
     required this.diameter,
     required this.duration,
@@ -86,11 +90,18 @@ class IEC24Results {
 class IEC60332Page2 extends StatefulWidget {
   final double calculatedTestPiecesFromPage1;
   final IECTestType selectedIECType;
+  // --- ADDED: Receive results from Page 1 ---
+  final List<dynamic> page1Results;
+  final String page1TotalVolume;
+  final String page1TestPieces;
 
   const IEC60332Page2({
     super.key, 
     required this.calculatedTestPiecesFromPage1,
     required this.selectedIECType,
+    required this.page1Results,
+    required this.page1TotalVolume,
+    required this.page1TestPieces,
   });
 
   @override
@@ -106,9 +117,10 @@ class IEC60332Page2State extends State<IEC60332Page2> {
   bool _showResultTab = false;
   final ScrollController _scrollController = ScrollController();
 
+  // --- MODIFIED: Replaced symbols with compatible characters ---
   final Map<String, double> _cableConductorData = {
-    '≤ 35mm²': 0.0, 
-    '≥ 50mm²': 0.0, 
+    '<= 35mm²': 0.0, 
+    '>= 50mm²': 0.0, 
   };
 
   @override
@@ -208,8 +220,8 @@ class IEC60332Page2State extends State<IEC60332Page2> {
         firstErrorMsg ??= errorMsg;
         tempResults[i] = null;
       } else if (conductorKey != null && diameterOD != null) {
-        // Nested IF logic based on Conductor and Diameter
-        if (conductorKey == '≤ 35mm²') {   // ≤ 35mm²
+        // --- MODIFIED: Updated logic to use new keys ---
+        if (conductorKey == '<= 35mm²') {   // <= 35mm²
           determinedFormation = "Touching"; 
           determinedLadder = "300mm";   
           determinedArray = '';
@@ -246,9 +258,9 @@ class IEC60332Page2State extends State<IEC60332Page2> {
           determinedWireSizeDesc = "0.5 - 1.0 mm";
           determinedBurner = "Single"; 
 
-        } else if (conductorKey == '≥ 50mm²')  {    // ≥ 50mm²
+        } else if (conductorKey == '>= 50mm²')  {    // >= 50mm²
 
-          if (diameterOD > 40.0) {        // ≥ 50mm² & > 40.0mm
+          if (diameterOD > 40.0) {        // >= 50mm² & > 40.0mm
             determinedFormation = "Spacing"; 
             determinedLadder = "300mm";  
             determinedWireSizeDesc = "0.5 - 1.0 mm";
@@ -269,7 +281,7 @@ class IEC60332Page2State extends State<IEC60332Page2> {
             determinedArray = actualTestPiece.toStringAsFixed(0);
             }   
 
-            if (diameterOD > 50.0) {      // ≥ 50mm² & > 50.0mm
+            if (diameterOD > 50.0) {      // >= 50mm² & > 50.0mm
               determinedWireSizeDesc = "1.0 - 2.5 mm";
             }
           } else { // Diameter is <= 40.0
@@ -288,7 +300,7 @@ class IEC60332Page2State extends State<IEC60332Page2> {
               determinedBurner = "Double";
             }   
 
-            if (diameterOD > 50.0) {      // ≥ 50mm² & > 50.0mm
+            if (diameterOD > 50.0) {      // >= 50mm² & > 50.0mm
               determinedWireSizeDesc = "1.0 - 2.5 mm";
             }
 
@@ -306,7 +318,7 @@ class IEC60332Page2State extends State<IEC60332Page2> {
         String duration = (_selectedIECType == IECTestType.iEC60332_3_22) ? "40 minutes" : "20 minutes";
 
         if (_selectedIECType == IECTestType.iEC60332_3_22) {
-          tempResults[i] = IEC22Results( 
+          tempResults[i] = IEC22ResultsPage2( 
             conductor: conductorKey,
             diameter: '${diameterOD.toStringAsFixed(2)} mm', 
             duration: duration,
@@ -318,7 +330,7 @@ class IEC60332Page2State extends State<IEC60332Page2> {
             totalTestPieces: testPieces,
           );
         } else { // IECTestType.iEC60332_3_24
-            tempResults[i] = IEC24Results( 
+            tempResults[i] = IEC24ResultsPage2( 
             conductor: conductorKey,
             diameter: '${diameterOD.toStringAsFixed(2)} mm', 
             duration: duration,
@@ -342,7 +354,7 @@ class IEC60332Page2State extends State<IEC60332Page2> {
         _calculationError = firstErrorMsg;
       }
 
-      bool hasActualCalculations = _calculatedResults.any((r) => r is IEC22Results || r is IEC24Results);
+      bool hasActualCalculations = _calculatedResults.any((r) => r is IEC22ResultsPage2 || r is IEC24ResultsPage2);
       bool hasSkipped = _calculatedResults.any((r) => r == "SKIPPED");
 
       if (hasActualCalculations || _calculationError != null || hasSkipped) {
@@ -375,6 +387,169 @@ class IEC60332Page2State extends State<IEC60332Page2> {
       }
     });
   }
+
+  // --- MODIFIED: PDF Generation for Web Download ---
+  Future<void> _generateAndOpenPdf() async {
+    final pdf = pw.Document();
+
+    // --- ADDED: Load logo from assets ---
+    final logoData = await rootBundle.load('images/keystone.png');
+    final logoImage = pw.MemoryImage(logoData.buffer.asUint8List());
+
+    String testCategory = _selectedIECType == IECTestType.iEC60332_3_22
+        ? "Category A (IEC 60332-3-22)"
+        : "Category C (IEC 60332-3-24)";
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        // --- MODIFIED: Header now includes the logo ---
+        header: (context) => pw.Header(
+          child: pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            children: [
+              pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text('IEC 60332-3 Test Report', style: pw.Theme.of(context).defaultTextStyle.copyWith(fontWeight: pw.FontWeight.bold, fontSize: 16)),
+                  pw.Text(testCategory, style: pw.Theme.of(context).defaultTextStyle.copyWith(color: PdfColors.grey)),
+                ]
+              ),
+              pw.SizedBox(
+                height: 70, // Changed size
+                width: 70,  // Changed size
+                child: pw.Opacity(
+                  opacity: 0.5, // Added for 50% opacity
+                  child: pw.Image(logoImage),
+                ),
+              ),
+            ],
+          ),
+          decoration: const pw.BoxDecoration(border: pw.Border(bottom: pw.BorderSide(color: PdfColors.grey, width: 0.5))),
+        ),
+        footer: (context) => pw.Container(
+          alignment: pw.Alignment.centerRight,
+          child: pw.Text('Page ${context.pageNumber} of ${context.pagesCount}', style: pw.Theme.of(context).defaultTextStyle.copyWith(color: PdfColors.grey)),
+        ),
+        build: (context) => [
+          pw.Header(level: 1, text: 'Part 1: Non-Metallic Volume Calculation'),
+          pw.SizedBox(height: 10),
+          _buildPage1PdfTable(),
+          pw.SizedBox(height: 10),
+          if (widget.page1TotalVolume.isNotEmpty)
+            pw.Text(widget.page1TotalVolume, style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+          if (widget.page1TestPieces.isNotEmpty)
+            pw.Text(widget.page1TestPieces, style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+          pw.SizedBox(height: 20),
+
+          pw.Header(level: 1, text: 'Part 2: Test Setup Details'),
+          pw.SizedBox(height: 10),
+          _buildPage2PdfTable(),
+          pw.SizedBox(height: 10),
+          if (_calculationError != null && !_calculatedResults.any((r) => r is IEC22ResultsPage2 || r is IEC24ResultsPage2))
+             pw.Text('Part 2 Error: $_calculationError', style: pw.TextStyle(color: PdfColors.red)),
+        ],
+      ),
+    );
+
+    try {
+      final Uint8List bytes = await pdf.save();
+      final blob = html.Blob([bytes], 'application/pdf');
+      final url = html.Url.createObjectUrlFromBlob(blob);
+      final anchor = html.document.createElement('a') as html.AnchorElement
+        ..href = url
+        ..style.display = 'none'
+        ..download = 'iec_report.pdf';
+      html.document.body?.append(anchor);
+      anchor.click();
+      anchor.remove(); // Use remove() on the element itself
+      html.Url.revokeObjectUrl(url);
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('PDF download started.')),
+      );
+
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error generating PDF: $e')),
+      );
+    }
+  }
+
+  pw.Widget _buildPage1PdfTable() {
+    final headers = ['Material', 'Weight', 'Density', 'Volume (l/m)'];
+    
+    final data = widget.page1Results.map((result) {
+      if (result is IEC22Results) {
+        return [result.material, result.weight, result.density, result.volume];
+      } else if (result is IEC24Results) {
+        return [result.material, result.weight, result.density, result.volume];
+      } else if (result == "SKIPPED") {
+        return ['Skipped', '', '', ''];
+      }
+      return ['', '', '', ''];
+    }).where((row) => row.any((cell) => cell.isNotEmpty)).toList();
+
+    if (data.isEmpty) {
+      return pw.Text("No data calculated for Part 1.");
+    }
+
+    // --- FIXED: Replaced deprecated Table.fromTextArray ---
+    return pw.TableHelper.fromTextArray(
+      headers: headers,
+      data: data,
+      border: pw.TableBorder.all(),
+      headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+      headerDecoration: const pw.BoxDecoration(color: PdfColors.grey300),
+      cellHeight: 30,
+      cellAlignments: {
+        0: pw.Alignment.centerLeft,
+        1: pw.Alignment.centerRight,
+        2: pw.Alignment.centerRight,
+        3: pw.Alignment.centerRight,
+      },
+    );
+  }
+
+  pw.Widget _buildPage2PdfTable() {
+    final headers = ['Conductor', 'Diameter', 'Formation', 'Ladder', 'Array / Actual #', 'Burner'];
+
+    final data = _calculatedResults.map((result) {
+      if (result is IEC22ResultsPage2) {
+        return [result.conductor, result.diameter, result.formation, result.ladder, result.array, result.burner];
+      } else if (result is IEC24ResultsPage2) {
+        return [result.conductor, result.diameter, result.formation, result.ladder, result.array, result.burner];
+      } else if (result == "SKIPPED") {
+        return ['Skipped', '', '', '', '', ''];
+      }
+      return ['', '', '', '', '', ''];
+    }).where((row) => row.any((cell) => cell.isNotEmpty)).toList();
+
+    if (data.isEmpty) {
+      return pw.Text("No data calculated for Part 2.");
+    }
+
+    // --- FIXED: Replaced deprecated Table.fromTextArray ---
+    return pw.TableHelper.fromTextArray(
+      headers: headers,
+      data: data,
+      border: pw.TableBorder.all(),
+      headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+      headerDecoration: const pw.BoxDecoration(color: PdfColors.grey300),
+      cellHeight: 30,
+      cellAlignments: {
+        0: pw.Alignment.centerLeft,
+        1: pw.Alignment.centerRight,
+        2: pw.Alignment.center,
+        3: pw.Alignment.center,
+        4: pw.Alignment.center,
+        5: pw.Alignment.center,
+      },
+    );
+  }
+
 
   Widget _buildTextField({
     required String label,
@@ -533,6 +708,19 @@ class IEC60332Page2State extends State<IEC60332Page2> {
                             minimumSize: const Size(90, 45))),
                   ],
                 ),
+                
+                // --- ADDED: Generate PDF Button ---
+                const SizedBox(height: 15),
+                ElevatedButton.icon(
+                  onPressed: _generateAndOpenPdf,
+                  icon: const Icon(Icons.picture_as_pdf),
+                  label: const Text('Generate PDF Report'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange.shade700,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(208, 45),
+                  ),
+                ),
 
                 const SizedBox(height: 30),
 
@@ -544,106 +732,111 @@ class IEC60332Page2State extends State<IEC60332Page2> {
                           constraints: const BoxConstraints(maxWidth: 380),
                           padding: const EdgeInsets.all(16.0),
                           decoration: BoxDecoration(
-                            color: _calculationError != null && !(_calculatedResults.any((r) => r is IEC22Results || r is IEC24Results))
+                            color: _calculationError != null && !(_calculatedResults.any((r) => r is IEC22ResultsPage2 || r is IEC24ResultsPage2))
                                 ? Colors.red[50]
                                 : Colors.green[50], 
                             borderRadius: BorderRadius.circular(8.0),
                             border: Border.all(
-                                color: _calculationError != null && !(_calculatedResults.any((r) => r is IEC22Results || r is IEC24Results))
+                                color: _calculationError != null && !(_calculatedResults.any((r) => r is IEC22ResultsPage2 || r is IEC24ResultsPage2))
                                     ? Colors.red.shade300
                                     : Colors.green.shade300), 
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              if (_calculationError != null && !(_calculatedResults.any((r) => r is IEC22Results || r is IEC24Results)))
+                              // --- MODIFIED: Refactored to use standard if/else blocks ---
+                              if (_calculationError != null && !(_calculatedResults.any((r) => r is IEC22ResultsPage2 || r is IEC24ResultsPage2)))
                                 Text(_calculationError!, style: errorStyle)
-                              else ...[
-                                Text(
-                                  _selectedIECType == IECTestType.iEC60332_3_22 
-                                      ? 'Results (IEC 60332-3-22):' 
-                                      : 'Results (IEC 60332-3-24):',
-                                  style: boldStyle
-                                ),
-                                if (_calculationError != null)
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 5.0, bottom: 8.0),
-                                    child: Text(_calculationError!, style: errorStyle.copyWith(fontSize: 14)),
-                                  ),
-                                ListView.builder(
-                                  shrinkWrap: true,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  itemCount: _calculatedResults.length,
-                                  itemBuilder: (context, index) {
-                                    final result = _calculatedResults[index];
-                                    if (result == "SKIPPED") {
-                                      return Padding(
-                                        padding: const EdgeInsets.symmetric(vertical: 3.0),
-                                        child: Text('Entry ${index + 1}: Skipped', style: normalStyle.copyWith(fontStyle: FontStyle.italic, color: Colors.grey[700])),
-                                      );
-                                    }
-                                    
-                                    String conductor = "", diameter = "", duration = "", formation = "", ladder = "", wireSize = "", burner = "", array = "";
-                                    double testPieces = 0;
+                              else 
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _selectedIECType == IECTestType.iEC60332_3_22 
+                                          ? 'Results (IEC 60332-3-22):' 
+                                          : 'Results (IEC 60332-3-24):',
+                                      style: boldStyle
+                                    ),
+                                    if (_calculationError != null)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 5.0, bottom: 8.0),
+                                        child: Text(_calculationError!, style: errorStyle.copyWith(fontSize: 14)),
+                                      ),
+                                    ListView.builder(
+                                      shrinkWrap: true,
+                                      physics: const NeverScrollableScrollPhysics(),
+                                      itemCount: _calculatedResults.length,
+                                      itemBuilder: (context, index) {
+                                        final result = _calculatedResults[index];
+                                        if (result == "SKIPPED") {
+                                          return Padding(
+                                            padding: const EdgeInsets.symmetric(vertical: 3.0),
+                                            child: Text('Entry ${index + 1}: Skipped', style: normalStyle.copyWith(fontStyle: FontStyle.italic, color: Colors.grey[700])),
+                                          );
+                                        }
+                                        
+                                        String conductor = "", diameter = "", duration = "", formation = "", ladder = "", wireSize = "", burner = "", array = "";
+                                        double testPieces = 0;
 
-                                    if (result is IEC22Results) { 
-                                        conductor = result.conductor;
-                                        diameter = result.diameter;
-                                        duration = result.duration;
-                                        formation = result.formation;
-                                        ladder = result.ladder;
-                                        wireSize = result.wireSize;
-                                        burner = result.burner;
-                                        testPieces = result.totalTestPieces;
-                                        array = result.array;
-                                    } else if (result is IEC24Results) { 
-                                        conductor = result.conductor;
-                                        diameter = result.diameter;
-                                        duration = result.duration;
-                                        formation = result.formation;
-                                        ladder = result.ladder;
-                                        wireSize = result.wireSize;
-                                        burner = result.burner;
-                                        testPieces = result.totalTestPieces;
-                                        array = result.array;
-                                    }
+                                        if (result is IEC22ResultsPage2) { 
+                                            conductor = result.conductor;
+                                            diameter = result.diameter;
+                                            duration = result.duration;
+                                            formation = result.formation;
+                                            ladder = result.ladder;
+                                            wireSize = result.wireSize;
+                                            burner = result.burner;
+                                            testPieces = result.totalTestPieces;
+                                            array = result.array;
+                                        } else if (result is IEC24ResultsPage2) { 
+                                            conductor = result.conductor;
+                                            diameter = result.diameter;
+                                            duration = result.duration;
+                                            formation = result.formation;
+                                            ladder = result.ladder;
+                                            wireSize = result.wireSize;
+                                            burner = result.burner;
+                                            testPieces = result.totalTestPieces;
+                                            array = result.array;
+                                        }
 
-                                    if (conductor.isNotEmpty) { 
-                                      return Padding(
-                                        padding: const EdgeInsets.symmetric(vertical: 6.0),
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text('Conductor: ($conductor, $diameter)', style: boldStyle.copyWith(fontSize: 15)), 
-                                            Padding(
-                                              padding: const EdgeInsets.only(left: 8.0, top: 4.0),
-                                              child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Text('Test Duration: $duration', style: resultValueStyle),
-                                                  Text('# Test Pieces: ${testPieces.toStringAsFixed(1)}', style: resultValueStyle),
-                                                  Text('Formation: $formation', style: resultValueStyle),
-                                                  Text('Ladder: $ladder', style: resultValueStyle),
-                                                  Text('Wire Size: $wireSize', style: resultValueStyle),
-                                                  Text('Burner: $burner', style: resultValueStyle),
-                                                  if (conductor == "≤ 35mm²")
-                                                    Text('Array: $array', style: resultValueStyle),
+                                        if (conductor.isNotEmpty) { 
+                                          return Padding(
+                                            padding: const EdgeInsets.symmetric(vertical: 6.0),
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text('Conductor: ($conductor, $diameter)', style: boldStyle.copyWith(fontSize: 15)), 
+                                                Padding(
+                                                  padding: const EdgeInsets.only(left: 8.0, top: 4.0),
+                                                  child: Column(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      Text('Test Duration: $duration', style: resultValueStyle),
+                                                      Text('# Test Pieces: ${testPieces.toStringAsFixed(1)}', style: resultValueStyle),
+                                                      Text('Formation: $formation', style: resultValueStyle),
+                                                      Text('Ladder: $ladder', style: resultValueStyle),
+                                                      Text('Wire Size: $wireSize', style: resultValueStyle),
+                                                      Text('Burner: $burner', style: resultValueStyle),
+                                                      if (conductor == "<= 35mm²")
+                                                        Text('Array: $array', style: resultValueStyle),
 
-                                                  if (conductor == "≥ 50mm²")     
-                                                    Text('Actual # Test Pieces: $array', style: resultValueStyle),
-                                                ],
-                                              ),
+                                                      if (conductor == ">= 50mm²")     
+                                                        Text('Actual # Test Pieces: $array', style: resultValueStyle),
+                                                    ],
+                                                  ),
+                                                ),
+                                               if (index < _calculatedResults.length -1 && _calculatedResults.skip(index+1).any((r) => r != null && r != "SKIPPED"))
+                                                    const Divider(height: 12, thickness: 0.5, indent: 8, endIndent: 8),
+                                              ],
                                             ),
-                                           if (index < _calculatedResults.length -1 && _calculatedResults.skip(index+1).any((r) => r != null && r != "SKIPPED"))
-                                                const Divider(height: 12, thickness: 0.5, indent: 8, endIndent: 8),
-                                          ],
-                                        ),
-                                      );
-                                    }
-                                    return const SizedBox.shrink(); 
-                                  },
+                                          );
+                                        }
+                                        return const SizedBox.shrink(); 
+                                      },
+                                    ),
+                                  ]
                                 ),
-                              ] 
                             ],
                           ),
                         )

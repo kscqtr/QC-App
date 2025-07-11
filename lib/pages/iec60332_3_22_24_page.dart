@@ -231,12 +231,16 @@ class IEC60332PageState extends State<IEC60332Page> {
       }
     }
 
+    // --- MODIFIED: Pass the full results and summary strings to Page 2 ---
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => IEC60332Page2(
           calculatedTestPiecesFromPage1: _calculatedTestPiecesPage2, 
           selectedIECType: _selectedIECType,
+          page1Results: _calculatedResults,
+          page1TotalVolume: _totalVolumeDisplay,
+          page1TestPieces: _testPiecesPerTotalVolumeDisplay,
         ),
       ),
     );
