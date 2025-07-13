@@ -220,23 +220,26 @@ class IEC60332PageState extends State<IEC60332Page> {
     _calculateNewValues(); 
   }
 
-  void _navigateToNextPage() {
-    if (!_showResultTab || (_calculationError != null && !_calculatedResults.any((r) => r is IEC22Results || r is IEC24Results))) {
-      bool allSkippedOrNullAndNoError = _calculatedResults.whereType<dynamic>().every((res) => res == "SKIPPED" || res == null) && _calculationError == null;
-      if (!allSkippedOrNullAndNoError) {
-         ScaffoldMessenger.of(context).showSnackBar(
-             const SnackBar(content: Text('Please perform a valid calculation on this page first.')),
-         );
-         return;
-      }
+void _navigateToNextPage() {
+    // A calculation is considered valid if the results tab is shown 
+    // and there is at least one actual result object (not null or "SKIPPED").
+    final bool hasValidResults = _showResultTab && 
+                                 _calculatedResults.any((r) => r is IEC22Results || r is IEC24Results);
+
+    // If the calculation is not valid, show an error and stop.
+    if (!hasValidResults) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please perform a valid calculation on this page first.')),
+      );
+      return; // This stops the navigation.
     }
 
-    // --- MODIFIED: Pass the full results and summary strings to Page 2 ---
+    // If the check passes, proceed to the next page.
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => IEC60332Page2(
-          calculatedTestPiecesFromPage1: _calculatedTestPiecesPage2, 
+          calculatedTestPiecesFromPage1: _calculatedTestPiecesPage2,
           selectedIECType: _selectedIECType,
           page1Results: _calculatedResults,
           page1TotalVolume: _totalVolumeDisplay,

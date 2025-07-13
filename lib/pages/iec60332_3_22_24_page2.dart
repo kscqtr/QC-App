@@ -388,7 +388,6 @@ class IEC60332Page2State extends State<IEC60332Page2> {
     });
   }
 
-  // --- MODIFIED: PDF Generation for Web Download ---
   Future<void> _generateAndOpenPdf() async {
     final pdf = pw.Document();
 
@@ -408,21 +407,22 @@ class IEC60332Page2State extends State<IEC60332Page2> {
           child: pw.Row(
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
             children: [
-              pw.Column(
-                crossAxisAlignment: pw.CrossAxisAlignment.start,
-                children: [
-                  pw.Text('IEC 60332-3 Test Report', style: pw.Theme.of(context).defaultTextStyle.copyWith(fontWeight: pw.FontWeight.bold, fontSize: 16)),
-                  pw.Text(testCategory, style: pw.Theme.of(context).defaultTextStyle.copyWith(color: PdfColors.grey)),
-                ]
-              ),
               pw.SizedBox(
-                height: 70, // Changed size
-                width: 70,  // Changed size
+                height: 120, // Changed size
+                width: 120,  // Changed size
                 child: pw.Opacity(
                   opacity: 0.5, // Added for 50% opacity
                   child: pw.Image(logoImage),
                 ),
               ),
+              pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.end,
+                children: [
+                  pw.Text('IEC 60332-3 Test Report', style: pw.Theme.of(context).defaultTextStyle.copyWith(fontWeight: pw.FontWeight.bold, fontSize: 16)),
+                  pw.Text(testCategory, style: pw.Theme.of(context).defaultTextStyle.copyWith(color: PdfColors.grey)),
+                ]
+              ),
+
             ],
           ),
           decoration: const pw.BoxDecoration(border: pw.Border(bottom: pw.BorderSide(color: PdfColors.grey, width: 0.5))),
