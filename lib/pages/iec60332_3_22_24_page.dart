@@ -109,7 +109,11 @@ class IEC60332PageState extends State<IEC60332Page> {
   double _calculatedTestPiecesPage2 = 0.0;
 
   final Map<String, double> _materialDensityData = {
+    'Filler FRT Solid': 1.47,
+    'Filler PP yarn': 0.91,
+    'Mylar': 1.4,
     'Mica Tape': 1.6,
+    'XLEVA': 1.47,
     'XLPE': 0.94,
     'PP Yarn': 1.47,
     'FRT Tape': 1.4,

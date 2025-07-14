@@ -61422,7 +61422,7 @@ A.qJ.prototype={
 l(a){var s=this
 return"Material: "+s.a+", Weight: "+s.b+", Density: "+s.c+", Volume: "+s.d+", RawVolume: "+A.q(s.e)+", TestPieces: "+A.q(s.f)}}
 A.LO.prototype={
-a5(){return new A.LQ(B.eB,A.b([new A.qK(new A.bp(B.ab,$.aa()))],t.UL),[],A.mD(0,null,null),A.e(["Mica Tape",1.6,"XLPE",0.94,"PP Yarn",1.47,"FRT Tape",1.4,"LSZH",1.47],t.N,t.i))}}
+a5(){return new A.LQ(B.eB,A.b([new A.qK(new A.bp(B.ab,$.aa()))],t.UL),[],A.mD(0,null,null),A.e(["Filler FRT Solid",1.47,"Filler PP yarn",0.91,"Mylar",1.4,"Mica Tape",1.6,"XLEVA",1.47,"XLPE",0.94,"PP Yarn",1.47,"FRT Tape",1.4,"LSZH",1.47],t.N,t.i))}}
 A.LQ.prototype={
 aF(){this.aS()
 this.aLb()},
