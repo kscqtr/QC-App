@@ -6,7 +6,6 @@ enum AgeingTestType { tubular, dumbbell }
 
 // Helper class to hold controllers for each sample's inputs
 class AgeingSampleControllers {
-  // Controllers for Tubular & Dumbbell
   // For Dumbbell, diameterController will represent 'Width'
   final TextEditingController diameterController; // mm (or Width for Dumbbell)
   final TextEditingController avgThicknessController; // mm
@@ -34,7 +33,7 @@ class AgeingSampleControllers {
   }
 }
 
-// Helper class to hold the calculated results for a single sample (Tubular)
+// --- REVERTED: Using original result classes to hold formatted strings ---
 class TubularSampleResults {
   final String area;
   final String tensileStrength;
@@ -44,14 +43,8 @@ class TubularSampleResults {
       {required this.area,
       required this.tensileStrength,
       required this.elongation});
-
-  @override
-  String toString() {
-    return 'Area: $area, TS: $tensileStrength, Elong: $elongation';
-  }
 }
 
-// Helper class to hold the calculated results for a single sample (Dumbbell)
 class DumbbellSampleResults {
   final String area;
   final String tensileStrength;
@@ -61,12 +54,8 @@ class DumbbellSampleResults {
       {required this.area,
       required this.tensileStrength,
       required this.elongation});
-
-  @override
-  String toString() {
-    return 'Area: $area, TS: $tensileStrength, Elong: $elongation';
-  }
 }
+
 
 class AgeingPage extends StatefulWidget {
   const AgeingPage({super.key});
@@ -78,15 +67,13 @@ class AgeingPage extends StatefulWidget {
 class AgeingPageState extends State<AgeingPage> {
   AgeingTestType _selectedAgeingType = AgeingTestType.tubular;
   List<AgeingSampleControllers> _sampleControllers = [AgeingSampleControllers()];
-  // Store structured results (TubularSampleResults, DumbbellSampleResults) or "SKIPPED" string
   List<dynamic> _calculatedResults = [];
   String? _calculationError;
   bool _showResultTab = false;
   final int _maxSamples = 6;
-  final ScrollController _scrollController = ScrollController(); // Scroll controller for auto-scroll
+  final ScrollController _scrollController = ScrollController();
 
-  // New state variable for original length selection
-  double _selectedOriginalLength = 20.0; // Default to 20mm
+  double _selectedOriginalLength = 20.0;
   final List<double> _originalLengthOptions = [10.0, 20.0];
 
 
@@ -97,14 +84,12 @@ class AgeingPageState extends State<AgeingPage> {
   }
 
   void _initializeSamplesAndResults() {
-    // Dispose existing controllers if any, before re-initializing
     for (var controllers in _sampleControllers) {
       controllers.dispose();
     }
     _sampleControllers = [AgeingSampleControllers()];
-    _calculatedResults =
-        List.filled(_sampleControllers.length, null, growable: true);
-    _selectedOriginalLength = 20.0; // Reset to default on init
+    _calculatedResults = [];
+    _selectedOriginalLength = 20.0;
   }
 
   @override
@@ -112,7 +97,7 @@ class AgeingPageState extends State<AgeingPage> {
     for (var controllers in _sampleControllers) {
       controllers.dispose();
     }
-    _scrollController.dispose(); // Dispose scroll controller
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -120,34 +105,31 @@ class AgeingPageState extends State<AgeingPage> {
     if (newType != null && newType != _selectedAgeingType) {
       setState(() {
         _selectedAgeingType = newType;
-        _resetFields(resetType: false); // Reset fields but keep the newly selected type
+        _resetFields(resetType: false);
       });
     }
   }
 
-  // New method for handling original length dropdown changes
   void _onOriginalLengthChanged(double? newLength) {
     if (newLength != null && newLength != _selectedOriginalLength) {
       setState(() {
         _selectedOriginalLength = newLength;
-        _showResultTab = false; // Hide results when input changes
-        _calculationError = null; // Clear error when input changes
+        _showResultTab = false;
+        _calculationError = null;
       });
     }
   }
 
 
- void _scrollToBottom() {
-    // Ensure the scroll controller has clients and the widget is built.
+  void _scrollToBottom() {
     if (_scrollController.hasClients) {
-      // Using addPostFrameCallback to ensure the scroll happens after the layout pass
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_scrollController.hasClients) { // Check again inside callback
-            _scrollController.animateTo(
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
             _scrollController.position.maxScrollExtent,
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeOut,
-            );
+          );
         }
       });
     }
@@ -157,13 +139,10 @@ class AgeingPageState extends State<AgeingPage> {
     if (_sampleControllers.length < _maxSamples) {
       setState(() {
         _sampleControllers.add(AgeingSampleControllers());
-        // Ensure _calculatedResults list is extended and initialized with null
-        _calculatedResults = List.filled(_sampleControllers.length, null, growable: true);
-        _showResultTab = false; // Hide results when inputs change
+        _showResultTab = false;
         _calculationError = null;
+        _calculatedResults = List.filled(_sampleControllers.length, null, growable: true);
       });
-      // Scroll to the bottom after the state is updated and widget rebuilds
-      // Adding a slight delay to ensure the new item is rendered before scrolling
       Future.delayed(const Duration(milliseconds: 50), _scrollToBottom);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -177,17 +156,9 @@ class AgeingPageState extends State<AgeingPage> {
       setState(() {
         _sampleControllers[index].dispose();
         _sampleControllers.removeAt(index);
-        if (_calculatedResults.length > index) {
-          _calculatedResults.removeAt(index);
-        }
-        // Re-evaluate if results tab should be shown
-        bool hasAnyValidResult = _calculatedResults.any((r) => r != null && r != "SKIPPED");
-        if (!hasAnyValidResult && _calculationError == null) {
-            _showResultTab = false;
-        } else {
-            _showResultTab = _calculatedResults.any((r) => r != null) || _calculationError != null;
-        }
-        if (!_showResultTab) _calculationError = null;
+        _showResultTab = false;
+        _calculationError = null;
+        _calculatedResults.removeAt(index);
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -203,197 +174,89 @@ class AgeingPageState extends State<AgeingPage> {
       _calculatedResults = List.filled(_sampleControllers.length, null, growable: true);
       _showResultTab = false;
     });
-
-    if (_selectedAgeingType == AgeingTestType.tubular) {
-      _calculateForTubular();
-    } else if (_selectedAgeingType == AgeingTestType.dumbbell) {
-      _calculateForDumbbell();
-    }
-  }
-
-  void _calculateForTubular() {
-    List<dynamic> tempResults = List.filled(_sampleControllers.length, null, growable: true);
+    
     String? firstErrorMsg;
+    List<dynamic> tempPerSampleResults = List.filled(_sampleControllers.length, null, growable: true);
 
     for (int i = 0; i < _sampleControllers.length; i++) {
       final controllers = _sampleControllers[i];
-      final String diameterText = controllers.diameterController.text;
+      final String primaryDimText = controllers.diameterController.text; // Diameter or Width
       final String thicknessText = controllers.avgThicknessController.text;
       final String forceText = controllers.forceController.text;
       final String elongatedText = controllers.elongatedController.text;
 
-      if (diameterText.isEmpty && thicknessText.isEmpty && forceText.isEmpty && elongatedText.isEmpty) {
-        if (_sampleControllers.length > 1 && (i == 0 || (tempResults.length > i-1 && tempResults[i-1] != null))) {
-            tempResults[i] = "SKIPPED";
-            continue;
-        } else if (_sampleControllers.length == 1) {
-            firstErrorMsg ??= 'Please enter data for Sample ${i + 1}.';
+      if (primaryDimText.isEmpty && thicknessText.isEmpty && forceText.isEmpty && elongatedText.isEmpty) {
+        if (_sampleControllers.length > 1) {
+          tempPerSampleResults[i] = "SKIPPED";
+          continue;
+        } else {
+          firstErrorMsg ??= 'Please enter data for Sample ${i + 1}.';
+          break;
         }
       }
 
-      double? diameter = double.tryParse(diameterText);
+      double? primaryDim = double.tryParse(primaryDimText);
       double? thickness = double.tryParse(thicknessText);
       double? force = double.tryParse(forceText);
       double? elongatedMm = double.tryParse(elongatedText);
       String? errorMsg;
 
-      if (diameter == null && diameterText.isNotEmpty) {errorMsg = 'Invalid Diameter (Sample ${i+1}).';}
-      else if (thickness == null && thicknessText.isNotEmpty) {errorMsg = 'Invalid Avg. Thickness (Sample ${i+1}).';}
-      else if (force == null && forceText.isNotEmpty) {errorMsg = 'Invalid Force (Sample ${i+1}).';}
-      else if (elongatedMm == null && elongatedText.isNotEmpty) {errorMsg = 'Invalid Elongated (Sample ${i+1}).';}
-      else if (diameterText.isEmpty || thicknessText.isEmpty || forceText.isEmpty || elongatedText.isEmpty) {
-        if (tempResults[i] != "SKIPPED") {
-            errorMsg = 'All fields required for Sample ${i+1}.';
-        }
-      }
-      else if (diameter != null && thickness != null && force != null && elongatedMm != null) {
-        if (diameter <= 0) {errorMsg = 'Diameter must be positive (Sample ${i+1}).';}
-        else if (thickness <= 0) {errorMsg = 'Avg. Thickness must be positive (Sample ${i+1}).';}
-        else if (thickness >= diameter / 2) {errorMsg = 'Avg. Thickness too large for Sample ${i+1}.';}
-        else if (force <= 0) {errorMsg = 'Force must be positive (Sample ${i+1}).';}
-        else if (elongatedMm <= 0) {errorMsg = 'Elongated length must be positive (Sample ${i+1}).';}
-        // Using _selectedOriginalLength for elongation calculation
-        // else if (elongatedMm < _selectedOriginalLength && elongatedText.isNotEmpty) { /* Allow negative elongation */ }
-      }
+      final isTubular = _selectedAgeingType == AgeingTestType.tubular;
+      final primaryDimName = isTubular ? 'Diameter' : 'Width';
+
+      if (primaryDim == null) { errorMsg = 'Invalid $primaryDimName (Sample ${i+1}).'; }
+      else if (thickness == null) { errorMsg = 'Invalid Avg. Thickness (Sample ${i+1}).'; }
+      else if (force == null) { errorMsg = 'Invalid Force (Sample ${i+1}).'; }
+      else if (elongatedMm == null) { errorMsg = 'Invalid Elongated (Sample ${i+1}).'; }
+      else if (primaryDim <= 0) { errorMsg = '$primaryDimName must be positive (Sample ${i+1}).'; }
+      else if (thickness <= 0) { errorMsg = 'Thickness must be positive (Sample ${i+1}).'; }
+      else if (force <= 0) { errorMsg = 'Force must be positive (Sample ${i+1}).'; }
+      else if (elongatedMm <= 0) { errorMsg = 'Elongated length must be positive (Sample ${i+1}).'; }
+      else if (isTubular && thickness >= primaryDim / 2) { errorMsg = 'Avg. Thickness too large for Sample ${i+1}.'; }
 
       if (errorMsg != null) {
         firstErrorMsg ??= errorMsg;
-        tempResults[i] = null;
-      } else if (diameter != null && thickness != null && force != null && elongatedMm != null) {
-        double area = (diameter - thickness) * thickness * pi;
-        if (area <= 0) {
-          firstErrorMsg ??= 'Calculated area is invalid for Sample ${i+1}. Check Diameter and Thickness.';
-          tempResults[i] = null;
-        } else {
-          double tensileStrength = force / area;
-          // Use _selectedOriginalLength from state
-          double originalLengthMm = _selectedOriginalLength; 
-          double elongationPercentage = ((elongatedMm - originalLengthMm) / originalLengthMm) * 100.0;
-          tempResults[i] = TubularSampleResults(
-            area: '${area.toStringAsFixed(2)} mm²',
-            tensileStrength: '${tensileStrength.toStringAsFixed(2)} N/mm²',
-            elongation: '${elongationPercentage.toStringAsFixed(2)}%',
-          );
-        }
-      } else if (tempResults[i] != "SKIPPED" && (diameterText.isNotEmpty || thicknessText.isNotEmpty || forceText.isNotEmpty || elongatedText.isNotEmpty)) {
-        firstErrorMsg ??= 'Incomplete or invalid data for Sample ${i+1}.';
-        tempResults[i] = null;
+        break;
+      }
+
+      double area;
+      if (isTubular) {
+        area = (primaryDim! - thickness!) * thickness * pi;
+      } else {
+        area = primaryDim! * thickness!;
+      }
+
+      if (area <= 0) {
+        firstErrorMsg ??= 'Calculated area is invalid for Sample ${i+1}. Check inputs.';
+        break;
+      }
+      
+      double tensileStrength = force! / area;
+      double elongationPercentage = ((elongatedMm! - _selectedOriginalLength) / _selectedOriginalLength) * 100.0;
+      
+      if (isTubular) {
+        tempPerSampleResults[i] = TubularSampleResults(
+          area: '${area.toStringAsFixed(2)} mm²',
+          tensileStrength: '${tensileStrength.toStringAsFixed(2)} N/mm²',
+          elongation: '${elongationPercentage.toStringAsFixed(0)}%',
+        );
+      } else {
+        tempPerSampleResults[i] = DumbbellSampleResults(
+          area: '${area.toStringAsFixed(2)} mm²',
+          tensileStrength: '${tensileStrength.toStringAsFixed(2)} N/mm²',
+          elongation: '${elongationPercentage.toStringAsFixed(0)}%',
+        );
       }
     }
 
     setState(() {
-      _calculatedResults = tempResults;
       if (firstErrorMsg != null) {
         _calculationError = firstErrorMsg;
+      } else if (!tempPerSampleResults.any((r) => r is TubularSampleResults || r is DumbbellSampleResults)) {
+         _calculationError = "No valid data entered for calculation.";
       }
-
-      bool hasActualCalculations = _calculatedResults.any((r) => r is TubularSampleResults || r is DumbbellSampleResults);
-      bool hasSkipped = _calculatedResults.any((r) => r == "SKIPPED");
-
-      if (hasActualCalculations || _calculationError != null || hasSkipped) {
-        if (!hasActualCalculations && _calculationError == null && hasSkipped) {
-          _calculationError = "All valid samples were skipped. No results to display.";
-        } else if (!hasActualCalculations && _calculationError == null && !hasSkipped) {
-          _calculationError = "No valid data entered for calculation.";
-        }
-        _showResultTab = true;
-      } else {
-         _calculationError = "No data to process."; // Should ideally not be reached
-        _showResultTab = true; // Show tab to display this message
-      }
-    });
-  }
-
-  void _calculateForDumbbell() {
-    List<dynamic> tempResults = List.filled(_sampleControllers.length, null, growable: true);
-    String? firstErrorMsg;
-
-    for (int i = 0; i < _sampleControllers.length; i++) {
-      final controllers = _sampleControllers[i];
-      // For Dumbbell, diameterController holds 'Width'
-      final String widthText = controllers.diameterController.text;
-      final String thicknessText = controllers.avgThicknessController.text;
-      final String forceText = controllers.forceController.text;
-      final String elongatedText = controllers.elongatedController.text;
-
-      if (widthText.isEmpty && thicknessText.isEmpty && forceText.isEmpty && elongatedText.isEmpty) {
-         if (_sampleControllers.length > 1 && (i == 0 || (tempResults.length > i-1 && tempResults[i-1] != null))) {
-            tempResults[i] = "SKIPPED";
-            continue;
-        } else if (_sampleControllers.length == 1) {
-            firstErrorMsg ??= 'Please enter data for Sample ${i + 1}.';
-        }
-      }
-
-      double? width = double.tryParse(widthText);
-      double? thickness = double.tryParse(thicknessText);
-      double? force = double.tryParse(forceText);
-      double? elongatedMm = double.tryParse(elongatedText);
-      String? errorMsg;
-
-      if (width == null && widthText.isNotEmpty) {errorMsg = 'Invalid Width (Sample ${i+1}).';}
-      else if (thickness == null && thicknessText.isNotEmpty) {errorMsg = 'Invalid Avg. Thickness (Sample ${i+1}).';}
-      else if (force == null && forceText.isNotEmpty) {errorMsg = 'Invalid Force (Sample ${i+1}).';}
-      else if (elongatedMm == null && elongatedText.isNotEmpty) {errorMsg = 'Invalid Elongated (Sample ${i+1}).';}
-      else if (widthText.isEmpty || thicknessText.isEmpty || forceText.isEmpty || elongatedText.isEmpty) {
-        if (tempResults[i] != "SKIPPED") {
-             errorMsg = 'All fields required for Sample ${i+1}.';
-        }
-      }
-      else if (width != null && thickness != null && force != null && elongatedMm != null) {
-        if (width <= 0) {errorMsg = 'Width must be positive (Sample ${i+1}).';}
-        else if (thickness <= 0) {errorMsg = 'Avg. Thickness must be positive (Sample ${i+1}).';}
-        else if (force <= 0) {errorMsg = 'Force must be positive (Sample ${i+1}).';}
-        else if (elongatedMm <= 0) {errorMsg = 'Elongated length must be positive (Sample ${i+1}).';}
-      }
-
-      if (errorMsg != null) {
-        firstErrorMsg ??= errorMsg;
-        tempResults[i] = null;
-      } else if (width != null && thickness != null && force != null && elongatedMm != null) {
-        // Area = Width * Thickness for Dumbbell
-        double area = width * thickness;
-        if (area <= 0) { // Additional check for calculated area
-            firstErrorMsg ??= 'Calculated area is invalid for Sample ${i+1}. Check Width and Thickness.';
-            tempResults[i] = null;
-        } else {
-            double tensileStrength = force / area;
-            // Use _selectedOriginalLength from state
-            double originalLengthMm = _selectedOriginalLength; 
-            double elongationPercentage = ((elongatedMm - originalLengthMm) / originalLengthMm) * 100.0;
-
-            tempResults[i] = DumbbellSampleResults(
-                area: '${area.toStringAsFixed(2)} mm²',
-                tensileStrength: '${tensileStrength.toStringAsFixed(2)} N/mm²',
-                elongation: '${elongationPercentage.toStringAsFixed(2)}%',
-            );
-        }
-      } else if (tempResults[i] != "SKIPPED" && (widthText.isNotEmpty || thicknessText.isNotEmpty || forceText.isNotEmpty || elongatedText.isNotEmpty)) {
-        firstErrorMsg ??= 'Incomplete or invalid data for Sample ${i+1}.';
-        tempResults[i] = null;
-      }
-    }
-
-    setState(() {
-      _calculatedResults = tempResults;
-      if (firstErrorMsg != null) {
-        _calculationError = firstErrorMsg;
-      }
-
-      bool hasActualCalculations = _calculatedResults.any((r) => r is TubularSampleResults || r is DumbbellSampleResults);
-      bool hasSkipped = _calculatedResults.any((r) => r == "SKIPPED");
-
-      if (hasActualCalculations || _calculationError != null || hasSkipped) {
-        if (!hasActualCalculations && _calculationError == null && hasSkipped) {
-          _calculationError = "All valid samples were skipped. No results to display.";
-        } else if (!hasActualCalculations && _calculationError == null && !hasSkipped) {
-          _calculationError = "No valid data entered for calculation.";
-        }
-        _showResultTab = true;
-      } else {
-        _calculationError = "No data to process.";
-        _showResultTab = true;
-      }
+      _calculatedResults = tempPerSampleResults;
+      _showResultTab = true;
     });
   }
 
@@ -407,9 +270,9 @@ class AgeingPageState extends State<AgeingPage> {
       _calculatedResults = List.filled(_sampleControllers.length, null, growable: true);
       _calculationError = null;
       _showResultTab = false;
-      _selectedOriginalLength = 20.0; // Reset original length to default
-      if (resetType) { // Only reset type if explicitly told to
-        _selectedAgeingType = AgeingTestType.tubular; // Reset type to default
+      _selectedOriginalLength = 20.0;
+      if (resetType) {
+        _selectedAgeingType = AgeingTestType.tubular;
       }
     });
   }
@@ -434,8 +297,8 @@ class AgeingPageState extends State<AgeingPage> {
           contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
         ),
         onChanged: (value) => setState(() {
-            _showResultTab = false; // Hide results when input changes
-            _calculationError = null; // Clear error when input changes
+          _showResultTab = false;
+          _calculationError = null;
         }),
       ),
     );
@@ -454,7 +317,7 @@ class AgeingPageState extends State<AgeingPage> {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
       elevation: 1.0,
-      color: const Color(0xFFFFEBEB), // Light pinkish background for card
+      color: const Color(0xFFFFEBEB),
       child: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Column(
@@ -478,18 +341,18 @@ class AgeingPageState extends State<AgeingPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _buildTextField(label: firstFieldLabel, controller: controllers.diameterController),
+                Expanded(child: _buildTextField(label: firstFieldLabel, controller: controllers.diameterController)),
                 const SizedBox(width: 20.0),
-                _buildTextField(label: secondFieldLabel, controller: controllers.avgThicknessController),
+                Expanded(child: _buildTextField(label: secondFieldLabel, controller: controllers.avgThicknessController)),
               ],
             ),
             const SizedBox(height: 10.0),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _buildTextField(label: 'F, Force (N)', controller: controllers.forceController),
+                Expanded(child: _buildTextField(label: 'F, Force (N)', controller: controllers.forceController)),
                 const SizedBox(width: 20.0),
-                _buildTextField(label: 'E, Elongated (mm)', controller: controllers.elongatedController),
+                Expanded(child: _buildTextField(label: 'E, Elongated (mm)', controller: controllers.elongatedController)),
               ],
             ),
           ],
@@ -503,217 +366,271 @@ class AgeingPageState extends State<AgeingPage> {
     const boldStyle = TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87);
     const normalStyle = TextStyle(fontSize: 15, color: Colors.black87);
     final errorStyle = boldStyle.copyWith(color: Colors.red.shade700, fontSize: 16);
-    // final resultLabelStyle = normalStyle.copyWith(fontSize: 14, fontWeight: FontWeight.w500);
-    final resultValueStyle = normalStyle.copyWith(fontSize: 14);
-    // final noteStyle = TextStyle(fontSize: 13, color: Colors.grey.shade700, fontStyle: FontStyle.italic);
-
 
     return Scaffold(
       appBar: AppBar(title: const Text('Tensile Strength & Elongation')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView( // Attach scroll controller here
+        child: SingleChildScrollView(
           controller: _scrollController,
           child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center, 
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 10.0),
-                  child: DropdownButtonFormField<AgeingTestType>(
-                    decoration: const InputDecoration(
-                      labelText: 'Select Ageing Test Type',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 500),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center, 
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10.0),
+                    child: DropdownButtonFormField<AgeingTestType>(
+                      decoration: const InputDecoration(
+                        labelText: 'Select Ageing Test Type',
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                      ),
+                      value: _selectedAgeingType,
+                      items: AgeingTestType.values.map((AgeingTestType type) {
+                        return DropdownMenuItem<AgeingTestType>(
+                          value: type,
+                          child: Text(type.toString().split('.').last[0].toUpperCase() + type.toString().split('.').last.substring(1)),
+                        );
+                      }).toList(),
+                      onChanged: _onTestTypeChanged,
                     ),
-                    value: _selectedAgeingType,
-                    items: AgeingTestType.values.map((AgeingTestType type) {
-                      return DropdownMenuItem<AgeingTestType>(
-                        value: type,
-                        child: Text(type.toString().split('.').last[0].toUpperCase() + type.toString().split('.').last.substring(1)),
-                      );
-                    }).toList(),
-                    onChanged: _onTestTypeChanged,
                   ),
-                ),
-                // New Dropdown for Original Length
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 10.0),
-                  child: DropdownButtonFormField<double>(
-                    decoration: const InputDecoration(
-                      labelText: 'Select Original Length for Elongation',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10.0),
+                    child: DropdownButtonFormField<double>(
+                      decoration: const InputDecoration(
+                        labelText: 'Select Original Length for Elongation',
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                      ),
+                      value: _selectedOriginalLength,
+                      items: _originalLengthOptions.map((double length) {
+                        return DropdownMenuItem<double>(
+                          value: length,
+                          child: Text('${length.toInt()} mm'),
+                        );
+                      }).toList(),
+                      onChanged: _onOriginalLengthChanged,
                     ),
-                    value: _selectedOriginalLength,
-                    items: _originalLengthOptions.map((double length) {
-                      return DropdownMenuItem<double>(
-                        value: length,
-                        child: Text('${length.toInt()} mm'),
-                      );
-                    }).toList(),
-                    onChanged: _onOriginalLengthChanged,
                   ),
-                ),
-                
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: _sampleControllers.length,
-                  itemBuilder: (context, index) {
-                    return _buildSampleInputCard(index);
-                  },
-                ),
-                const SizedBox(height: 20),
+                  
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: _sampleControllers.length,
+                    itemBuilder: (context, index) {
+                      return _buildSampleInputCard(index);
+                    },
+                  ),
+                  const SizedBox(height: 20),
 
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    ElevatedButton.icon(
-                        onPressed: _performCalculations,
-                        icon: const Icon(Icons.calculate),
-                        label: const Text('Calculate'),
-                        style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(context).primaryColor,
-                            foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                            minimumSize: const Size(110, 45))),
-                    const SizedBox(width: 8),
-                    ElevatedButton.icon(
-                        onPressed: () => _resetFields(resetType: true), 
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Reset'),
-                        style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.grey[400],
-                            minimumSize: const Size(90, 45))),
-                  ],
-                ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ElevatedButton.icon(
+                          onPressed: _performCalculations,
+                          icon: const Icon(Icons.calculate),
+                          label: const Text('Calculate'),
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: Theme.of(context).primaryColor,
+                              foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                              minimumSize: const Size(110, 45))),
+                      const SizedBox(width: 8),
+                      ElevatedButton.icon(
+                          onPressed: () => _resetFields(resetType: true), 
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Reset'),
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.grey[400],
+                              minimumSize: const Size(90, 45))),
+                    ],
+                  ),
 
-                Row( // Add Sample button row
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const SizedBox(height: 80), // For spacing from above buttons
-                     ElevatedButton.icon( // "Add Sample" button now always available
-                        onPressed: _addSample,
-                        icon: const Icon(Icons.add),
-                        label: const Text('Add'),
-                        style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blueGrey.shade300,
-                            minimumSize: const Size(90, 45))),
-                  ],
-                ),
-                const SizedBox(height: 30),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const SizedBox(height: 80),
+                       ElevatedButton.icon(
+                          onPressed: _addSample,
+                          icon: const Icon(Icons.add),
+                          label: const Text('Add'),
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blueGrey.shade300,
+                              minimumSize: const Size(90, 45))),
+                    ],
+                  ),
+                  const SizedBox(height: 30),
 
-                AnimatedOpacity(
-                  opacity: _showResultTab ? 1.0 : 0.0,
-                  duration: const Duration(milliseconds: 300),
-                  child: _showResultTab
-                      ? Container(
-                          constraints: const BoxConstraints(maxWidth: 380),
-                          padding: const EdgeInsets.all(16.0),
-                          decoration: BoxDecoration(
-                            color: _calculationError != null && !(_calculatedResults.any((r) => r is TubularSampleResults || r is DumbbellSampleResults))
-                                ? Colors.red[50]
-                                : Colors.blue[50],
-                            borderRadius: BorderRadius.circular(8.0),
-                            border: Border.all(
-                                color: _calculationError != null && !(_calculatedResults.any((r) => r is TubularSampleResults || r is DumbbellSampleResults))
-                                    ? Colors.red.shade300
-                                    : Colors.blue.shade200),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (_calculationError != null && !(_calculatedResults.any((r) => r is TubularSampleResults || r is DumbbellSampleResults)))
-                                Text(_calculationError!, style: errorStyle)
-                              else ...[
-                                Text(
-                                  _selectedAgeingType == AgeingTestType.tubular
+                  AnimatedOpacity(
+                    opacity: _showResultTab ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 300),
+                    child: _showResultTab
+                        ? Container(
+                            constraints: const BoxConstraints(maxWidth: 380),
+                            padding: const EdgeInsets.all(16.0),
+                            decoration: BoxDecoration(
+                              color: _calculationError != null ? Colors.red[50] : Colors.blue[50],
+                              borderRadius: BorderRadius.circular(8.0),
+                              border: Border.all(
+                                  color: _calculationError != null
+                                      ? Colors.red.shade300
+                                      : Colors.blue.shade200),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (_calculationError != null)
+                                  Text(_calculationError!, style: errorStyle)
+                                else ...[
+                                  Text(
+                                    _selectedAgeingType == AgeingTestType.tubular
                                       ? 'Tubular Test Results:'
                                       : 'Dumbbell Test Results:',
-                                  style: boldStyle
-                                ),
-                                if (_calculationError != null) // Show error alongside results if any
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 5.0, bottom: 8.0),
-                                    child: Text(_calculationError!, style: errorStyle.copyWith(fontSize: 14)),
+                                    style: boldStyle
                                   ),
-                                ListView.builder(
-                                  shrinkWrap: true,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  itemCount: _calculatedResults.length,
-                                  itemBuilder: (context, index) {
-                                    final result = _calculatedResults[index];
-                                    if (result == "SKIPPED") {
-                                      return Padding(
-                                        padding: const EdgeInsets.symmetric(vertical: 3.0),
-                                        child: Text('Sample ${index + 1}: Skipped', style: normalStyle.copyWith(fontStyle: FontStyle.italic, color: Colors.grey[700])),
-                                      );
-                                    }
-                                    if (result is TubularSampleResults) {
-                                      return Padding(
-                                        padding: const EdgeInsets.symmetric(vertical: 6.0),
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text('Sample ${index + 1}:', style: boldStyle.copyWith(fontSize: 15)),
-                                            Padding(
-                                              padding: const EdgeInsets.only(left: 8.0, top: 2.0),
-                                              child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Text('Area: (D - T) * T * ${pi.toStringAsFixed(4)} = ${result.area}', style: resultValueStyle), // Display Pi value used
-                                                  Text('Tensile Strength: F/A = ${result.tensileStrength}', style: resultValueStyle),
-                                                  Text('Elongation: [(E - $_selectedOriginalLength)/$_selectedOriginalLength] * 100% = ${result.elongation}', style: resultValueStyle), // Show selected original length
-                                                ],
-                                              ),
-                                            ),
-                                            if (index < _calculatedResults.length -1 && _calculatedResults.skip(index+1).any((r) => r != null && r != "SKIPPED"))
-                                               const Divider(height: 10, thickness: 0.5),
-                                          ],
-                                        ),
-                                      );
-                                    }
-                                    if (result is DumbbellSampleResults) {
-                                      return Padding(
-                                        padding: const EdgeInsets.symmetric(vertical: 6.0),
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text('Sample ${index + 1}:', style: boldStyle.copyWith(fontSize: 15)),
-                                            Padding(
-                                              padding: const EdgeInsets.only(left: 8.0, top: 2.0),
-                                              child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Text('Area: W * T = ${result.area}', style: resultValueStyle), // Clarified formula
-                                                  Text('Tensile Strength: F/A = ${result.tensileStrength}', style: resultValueStyle),
-                                                  Text('Elongation: [(E - $_selectedOriginalLength)/$_selectedOriginalLength] * 100% = ${result.elongation}', style: resultValueStyle), // Show selected original length
-                                                ],
-                                              ),
-                                            ),
-                                           if (index < _calculatedResults.length -1 && _calculatedResults.skip(index+1).any((r) => r != null && r != "SKIPPED"))
-                                               const Divider(height: 10, thickness: 0.5),
-                                          ],
-                                        ),
-                                      );
-                                    }
-                                    return const SizedBox.shrink(); // For null results not caught as errors/skipped
-                                  },
-                                ),
-                              ]
-                            ],
-                          ),
-                        )
-                      : const SizedBox.shrink(),
-                ),
-                const SizedBox(height: 20), // For scroll padding at the bottom
-              ],
+                                  const SizedBox(height: 8),
+                                  ListView.builder(
+                                    shrinkWrap: true,
+                                    physics: const NeverScrollableScrollPhysics(),
+                                    itemCount: _calculatedResults.length,
+                                    itemBuilder: (context, index) {
+                                      final result = _calculatedResults[index];
+                                      if (result == "SKIPPED") {
+                                        return Padding(
+                                          padding: const EdgeInsets.symmetric(vertical: 3.0),
+                                          child: Text('Sample ${index + 1}: Skipped', style: normalStyle.copyWith(fontStyle: FontStyle.italic, color: Colors.grey[700])),
+                                        );
+                                      }
+                                      if (result is TubularSampleResults) {
+                                        return _buildResultRow(
+                                          index: index,
+                                          area: result.area,
+                                          tensile: result.tensileStrength,
+                                          elongation: result.elongation,
+                                          isTubular: true
+                                        );
+                                      }
+                                      if (result is DumbbellSampleResults) {
+                                        return _buildResultRow(
+                                          index: index,
+                                          area: result.area,
+                                          tensile: result.tensileStrength,
+                                          elongation: result.elongation,
+                                          isTubular: false
+                                        );
+                                      }
+                                      return const SizedBox.shrink();
+                                    },
+                                  ),
+                                ]
+                              ],
+                            ),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
             ),
           ),
         ),
       ),
     );
   }
-}
 
+  // --- NEW: Helper to show formula in a dialog ---
+  void _showFormulaDialog(BuildContext context, String title, String formula) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(formula),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Close'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // --- NEW: Helper for a single result row with an info icon ---
+  Widget _buildFormulaRow({
+    required String label,
+    required String value,
+    required String formula,
+  }) {
+    final resultLabelStyle = TextStyle(fontSize: 14, color: Colors.black87);
+    final resultValueStyle = TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black);
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Flexible(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: Icon(Icons.info_outline, color: Colors.blue.shade700, size: 20),
+                onPressed: () => _showFormulaDialog(context, '$label Formula', formula),
+                padding: const EdgeInsets.only(right: 6),
+                constraints: const BoxConstraints(),
+                splashRadius: 20,
+              ),
+              Flexible(child: Text('$label:', style: resultLabelStyle, overflow: TextOverflow.ellipsis)),
+            ],
+          ),
+        ),
+        Text(value, style: resultValueStyle),
+      ],
+    );
+  }
+
+  // --- MODIFIED: Uses the new _buildFormulaRow helper ---
+  Widget _buildResultRow({
+    required int index,
+    required String area,
+    required String tensile,
+    required String elongation,
+    required bool isTubular,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Sample ${index + 1}', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black)),
+          const SizedBox(height: 6),
+          _buildFormulaRow(
+            label: 'Area',
+            value: area,
+            formula: isTubular ? 'Area = (Diameter - Thickness) * Thickness * π' : 'Area = Width * Thickness',
+          ),
+          const SizedBox(height: 4),
+          _buildFormulaRow(
+            label: 'Tensile Strength',
+            value: tensile,
+            formula: 'Tensile Strength = Force / Area',
+          ),
+          const SizedBox(height: 4),
+          _buildFormulaRow(
+            label: 'Elongation',
+            value: elongation,
+            formula: 'Elongation = [(Elongated Length - Original Length) / Original Length] * 100',
+          ),
+          if (index < _calculatedResults.where((r) => r != null && r != "SKIPPED").length - 1)
+            const Divider(height: 16, thickness: 0.5),
+        ],
+      ),
+    );
+  }
+}
