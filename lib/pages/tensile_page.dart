@@ -579,12 +579,16 @@ class AgeingPageState extends State<AgeingPage> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              IconButton(
-                icon: Icon(Icons.info_outline, color: Colors.blue.shade700, size: 20),
-                onPressed: () => _showFormulaDialog(context, '$label Formula', formula),
-                padding: const EdgeInsets.only(right: 6),
-                constraints: const BoxConstraints(),
-                splashRadius: 20,
+              // New code with Tooltip
+              Tooltip(
+                message: formula, // This text will appear on hover
+                child: IconButton(
+                  icon: Icon(Icons.info_outline, color: Colors.blue.shade700, size: 20),
+                  onPressed: () => _showFormulaDialog(context, '$label Formula', formula),
+                  padding: const EdgeInsets.only(right: 6),
+                  constraints: const BoxConstraints(),
+                  splashRadius: 20,
+                ),
               ),
               Flexible(child: Text('$label:', style: resultLabelStyle, overflow: TextOverflow.ellipsis)),
             ],

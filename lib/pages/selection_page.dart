@@ -44,16 +44,20 @@ class _SelectionPageState extends State<SelectionPage> {
 
   // Map to store PDF paths associated with each page
   final Map<String, String> _pagePdfPaths = {
-    'Shrinkage': 'images/pdfs/shrinkage.pdf',
     'Conductor Resistance': 'images/pdfs/conductor_resistance.pdf',
     'Insulation Resistance': 'images/pdfs/insulation_resistance.pdf',
-    'Insulation Resistance (Drawer)': 'images/pdfs/insulation_resistance (drawer).pdf',
-    'Tests on Insulation (Drawer)': 'images/pdfs/tests_on_insulation (drawer).pdf',
-    'Tests on Sheath (Drawer)': 'images/pdfs/tests_on_sheath (drawer).pdf',
-    'Hot Set': 'images/pdfs/hot_set_dumbbell.pdf', 
-    'Mutual Capacitance': 'images/pdfs/mutual_capacitance.pdf', 
-    'Capacitance Unbalance to Earth (Cu)': 'images/pdfs/capacitance_unbalance.pdf', 
-    'Tensile & Elongation': 'images/pdfs/ageing.pdf',
+    'Tests on Insulation': 'images/pdfs/tests_on_insulation.pdf',
+    'Tests on Sheath': 'images/pdfs/tests_on_sheath.pdf',
+    'Capacitance': 'images/pdfs/capacitance.pdf',
+    'Tensile Strength': 'images/pdfs/tensile_strength.pdf',
+    'Tensile Elongation': 'images/pdfs/tensile_elongation.pdf',
+    'Hot Set': 'images/pdfs/hot_set.pdf', 
+    'Shrinkage': 'images/pdfs/shrinkage.pdf',
+    'IEC 60332-3-22': 'images/pdfs/iec60332_3_22.pdf',
+    'IEC 60332-3-24': 'images/pdfs/iec60332_3_24.pdf',
+    'Pressure': 'images/pdfs/pressure.pdf',
+    'Loss of Mass': 'images/pdfs/loss_of_mass.pdf', 
+    'Water Absorption': 'images/pdfs/water_absorption.pdf',
   };
 
   // Map to track the expansion state of each item
@@ -170,7 +174,7 @@ class _SelectionPageState extends State<SelectionPage> {
                       ),
                       onTap: () {
                         Navigator.pop(context); // Close drawer
-                        _openPdf('Conductor Resistance (Drawer)');
+                        _openPdf('Conductor Resistance');
                       },
                     ),
                     ListTile(
@@ -185,7 +189,7 @@ class _SelectionPageState extends State<SelectionPage> {
                       ),
                       onTap: () {
                         Navigator.pop(context);
-                        _openPdf('Insulation Resistance (Drawer)');
+                        _openPdf('Insulation Resistance');
                       },
                     ),
                   ],
@@ -210,7 +214,7 @@ class _SelectionPageState extends State<SelectionPage> {
                       ),
                       onTap: () {
                         Navigator.pop(context); // Close drawer
-                        _openPdf('Tests on Insulation (Drawer)');
+                        _openPdf('Tests on Insulation');
                       },
                     ),
                     ListTile(
@@ -225,7 +229,7 @@ class _SelectionPageState extends State<SelectionPage> {
                       ),
                       onTap: () {
                         Navigator.pop(context);
-                        _openPdf('Tests on Sheath (Drawer)');
+                        _openPdf('Tests on Sheath');
                       },
                     ),
                   ],
@@ -258,30 +262,29 @@ class _SelectionPageState extends State<SelectionPage> {
                 ),
                 ListTile(
                   contentPadding: const EdgeInsets.only(left: 32.0),
-                  leading: const Icon(Icons.compare_arrows, size: 22),
-                  title: const Text('Mutual Capacitance'),
+                  leading: const Icon(Icons.layers, size: 22),
+                  title: const Text('Capacitance'),
                   onTap: () {
                     Navigator.pop(context);
-                    _openPdf('Mutual Capacitance');
+                    _openPdf('Capacitance');
                   },
                 ),
-                ListTile(
+              ListTile(
                   contentPadding: const EdgeInsets.only(left: 32.0),
-                  leading: const Icon(Icons.electrical_services, size: 22),
-                  title: const Text('Capacitance Unbalance'),
+                  leading: const Icon(Icons.fitness_center, size: 22),
+                  title: const Text('Tensile Strength'),
                   onTap: () {
                     Navigator.pop(context);
-                    // Using the full key name as provided in your list
-                    _openPdf('Capacitance Unbalance to Earth (Cu)');
+                    _openPdf('Tensile Strength');
                   },
                 ),
                 ListTile(
                   contentPadding: const EdgeInsets.only(left: 32.0),
                   leading: const Icon(Icons.straighten, size: 22),
-                  title: const Text('Tensile & Elongation'),
+                  title: const Text('Tensile Elongation'),
                   onTap: () {
                     Navigator.pop(context);
-                    _openPdf('Tensile & Elongation');
+                    _openPdf('Tensile Elongation');
                   },
                 ),
                 ListTile(
@@ -302,6 +305,52 @@ class _SelectionPageState extends State<SelectionPage> {
                     _openPdf('Shrinkage');
                   },
                 ),
+                ListTile(
+                  contentPadding: const EdgeInsets.only(left: 32.0),
+                  leading: const Icon(Icons.local_fire_department, size: 22),
+                  title: const Text('IEC 60332-3-22'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _openPdf('IEC 60332-3-22');
+                  },
+                ),
+                ListTile(
+                  contentPadding: const EdgeInsets.only(left: 32.0),
+                  leading: const Icon(Icons.local_fire_department, size: 22),
+                  title: const Text('IEC 60332-3-24'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _openPdf('IEC 60332-3-24');
+                  },
+                ),
+                ListTile(
+                  contentPadding: const EdgeInsets.only(left: 32.0),
+                  leading: const Icon(Icons.speed, size: 22),
+                  title: const Text('Pressure'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _openPdf('Pressure');
+                  },
+                ),
+                ListTile(
+                  contentPadding: const EdgeInsets.only(left: 32.0),
+                  leading: const Icon(Icons.scale, size: 22),
+                  title: const Text('Loss of Mass'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _openPdf('Loss of Mass');
+                  },
+                ),
+                ListTile(
+                  contentPadding: const EdgeInsets.only(left: 32.0),
+                  leading: const Icon(Icons.water_drop, size: 22),
+                  title: const Text('Water Absorption'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _openPdf('Water Absorption');
+                  },
+                ),
+
               ],
             ),
 
