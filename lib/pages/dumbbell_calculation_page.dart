@@ -162,14 +162,14 @@ class _DumbbellCalculationPageState extends State<DumbbellCalculationPage> {
       }
 
       if (!hasAnyData) { // If no data was entered in any row
-         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Please enter data for at least one sample.')),
-          );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please enter data for at least one sample.')),
+        );
         _showResultsSection = false;
       } else if (_controllers.any((c) => c[0].text.isNotEmpty || c[1].text.isNotEmpty) || !allInputsValid) {
         _showResultsSection = true;
       } else {
-        _showResultsSection = false; // This case might need review if all valid but no results to show explicitly
+        _showResultsSection = false;
       }
     });
     FocusScope.of(context).unfocus();
@@ -183,32 +183,28 @@ class _DumbbellCalculationPageState extends State<DumbbellCalculationPage> {
     );
   }
 
-  // Helper to build individual text fields within a card
+  // --- MODIFIED: Removed SizedBox wrapper and width parameter ---
   Widget _buildMarkingTextField({
     required TextEditingController controller,
     required FocusNode focusNode,
-    required String labelText, // Changed from hintText to labelText
-    double? fieldWidth,
+    required String labelText,
   }) {
-    return SizedBox(
-      width: fieldWidth ?? MediaQuery.of(context).size.width * 0.35,
-      child: TextField(
-        controller: controller,
-        focusNode: focusNode,
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        textAlign: TextAlign.center,
-        style: const TextStyle(fontSize: 15.0),
-        decoration: InputDecoration(
-          labelText: labelText, // Using labelText for floating label effect
-          labelStyle: const TextStyle(fontSize: 15.0), // Style for the label
-          isDense: true,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8.0),
-          ),
-          contentPadding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0), // Adjusted padding for label
+    return TextField(
+      controller: controller,
+      focusNode: focusNode,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      textAlign: TextAlign.center,
+      style: const TextStyle(fontSize: 15.0),
+      decoration: InputDecoration(
+        labelText: labelText,
+        labelStyle: const TextStyle(fontSize: 15.0),
+        isDense: true,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8.0),
         ),
-        onChanged: (_) => setState(() => _showResultsSection = false),
+        contentPadding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
       ),
+      onChanged: (_) => setState(() => _showResultsSection = false),
     );
   }
 
@@ -244,19 +240,25 @@ class _DumbbellCalculationPageState extends State<DumbbellCalculationPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _buildMarkingTextField(
-                  controller: _controllers[index][0],
-                  focusNode: _focusNodes[index][0],
-                  labelText: 'Marking 1 (cm)', // Changed from hintText
+                // --- MODIFIED: Wrapped in Expanded ---
+                Expanded(
+                  child: _buildMarkingTextField(
+                    controller: _controllers[index][0],
+                    focusNode: _focusNodes[index][0],
+                    labelText: 'Marking 1 (cm)',
+                  ),
                 ),
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 8.0),
                   child: Text('to', style: TextStyle(fontSize: 15)),
                 ),
-                _buildMarkingTextField(
-                  controller: _controllers[index][1],
-                  focusNode: _focusNodes[index][1],
-                  labelText: 'Marking 2 (cm)', // Changed from hintText
+                // --- MODIFIED: Wrapped in Expanded ---
+                Expanded(
+                  child: _buildMarkingTextField(
+                    controller: _controllers[index][1],
+                    focusNode: _focusNodes[index][1],
+                    labelText: 'Marking 2 (cm)',
+                  ),
                 ),
               ],
             ),
@@ -266,11 +268,88 @@ class _DumbbellCalculationPageState extends State<DumbbellCalculationPage> {
     );
   }
 
+  // --- NEW: Helper to show formula in a dialog ---
+  void _showFormulaDialog(BuildContext context, String title, String formula) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(formula),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Close'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // --- NEW: Helper for a single result row with an info icon ---
+  Widget _buildResultRow({
+    required BuildContext context,
+    required int index,
+    required String result,
+  }) {
+    final ThemeData theme = Theme.of(context);
+    final resultValueStyle = const TextStyle(fontSize: 14, color: Colors.black87, fontWeight: FontWeight.w500);
+
+    Color resultColor = theme.textTheme.bodyLarge?.color ?? Colors.black;
+    FontWeight fontWeight = FontWeight.normal;
+
+    if (result.startsWith('Error:')) {
+      resultColor = theme.colorScheme.error;
+      fontWeight = FontWeight.bold;
+    } else if (result == 'Input is empty') {
+      resultColor = Colors.grey.shade600;
+    } else if (result.contains('(Fail)')) {
+      resultColor = theme.colorScheme.error;
+      fontWeight = FontWeight.bold;
+    } else if (result.contains('(Pass)')) {
+      resultColor = Colors.green.shade700;
+      fontWeight = FontWeight.bold;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Flexible(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Tooltip(
+                  message: 'Elongation = [ (Marking 1 - Marking 2) - 2 ] / 2 * 100',
+                  child: IconButton(
+                    icon: Icon(Icons.info_outline, color: Colors.blue.shade700, size: 20),
+                    onPressed: () => _showFormulaDialog(context, 'Elongation Formula', 'Elongation = [ (|Marking 1 - Marking 2|) - 2cm ] / 2cm * 100'),
+                    padding: const EdgeInsets.only(right: 6),
+                    constraints: const BoxConstraints(),
+                    splashRadius: 20,
+                  ),
+                ),
+                Flexible(child: Text('Sample ${index + 1}:', style: resultValueStyle)),
+              ],
+            ),
+          ),
+          Text(
+            result,
+            style: resultValueStyle.copyWith(color: resultColor, fontWeight: fontWeight),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     const boldStyle = TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87);
-    final resultValueStyle = const TextStyle(fontSize: 14, color: Colors.black87, fontWeight: FontWeight.w500);
     final specStyle = TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: theme.colorScheme.secondary);
 
     return Scaffold(
@@ -281,147 +360,133 @@ class _DumbbellCalculationPageState extends State<DumbbellCalculationPage> {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(
-          child: Column(
-            children: [
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _controllers.length,
-                itemBuilder: (context, index) {
-                  return _buildDumbbellSampleCard(index);
-                },
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  ElevatedButton.icon(
-                    onPressed: _calculate,
-                    icon: const Icon(Icons.calculate),
-                    label: const Text('Calculate'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.primaryColor,
-                      foregroundColor: theme.colorScheme.onPrimary,
-                      minimumSize: const Size(120, 45),
-                    ),
+          child: Center(
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 500),
+              child: Column(
+                children: [
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: _controllers.length,
+                    itemBuilder: (context, index) {
+                      return _buildDumbbellSampleCard(index);
+                    },
                   ),
-                  const SizedBox(width: 10),
-                  ElevatedButton.icon(
-                    onPressed: _resetFields,
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Reset'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey[400],
-                      minimumSize: const Size(120, 45),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  if (_controllers.length < _maxRows)
-                    ElevatedButton.icon(
-                      onPressed: _addRow,
-                      icon: const Icon(Icons.add),
-                      label: const Text('Add Sample'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blueGrey.shade300,
-                        minimumSize: const Size(120, 45),
-                      ),
-                    )
-                  else
-                    const SizedBox(width: 120, height: 45),
-                ],
-              ),
-              const SizedBox(height: 20),
-              AnimatedOpacity(
-                opacity: _showResultsSection ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 300),
-                child: _showResultsSection
-                    ? Card(
-                        elevation: 2.0,
-                        color: Colors.blue[50],
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Results:', style: boldStyle.copyWith(fontSize: 18)),
-                              const SizedBox(height: 5),
-                              Text(
-                                'Specification: Max ${_specification.toStringAsFixed(0)}%',
-                                style: specStyle,
-                              ),
-                              const Divider(height: 20, thickness: 1),
-                              ListView.builder(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                itemCount: _rowResults.length,
-                                itemBuilder: (context, index) {
-                                  final String currentResult = _rowResults[index];
-                                  if (currentResult.isEmpty && _controllers[index][0].text.isEmpty && _controllers[index][1].text.isEmpty) {
-                                    return const SizedBox.shrink();
-                                  }
-                                  if (currentResult.isEmpty) {
-                                     return Padding(
-                                        padding: const EdgeInsets.symmetric(vertical: 4.0),
-                                        child: Text(
-                                        'Sample ${index + 1}: Processing...',
-                                        style: resultValueStyle.copyWith(color: Colors.grey.shade600),
-                                        ),
-                                    );
-                                  }
-
-                                  Color resultColor = theme.textTheme.bodyLarge?.color ?? Colors.black;
-                                  FontWeight fontWeight = FontWeight.normal;
-
-                                  if (currentResult.startsWith('Error:')) {
-                                    resultColor = theme.colorScheme.error;
-                                    fontWeight = FontWeight.bold;
-                                  } else if (currentResult == 'Input is empty') {
-                                    resultColor = Colors.grey.shade600;
-                                  } else if (currentResult.contains('(Fail)')) {
-                                    resultColor = theme.colorScheme.error;
-                                    fontWeight = FontWeight.bold;
-                                  } else if (currentResult.contains('(Pass)')) {
-                                    resultColor = Colors.green.shade700;
-                                    fontWeight = FontWeight.bold;
-                                  }
-
-                                  return Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 4.0),
-                                    child: Text(
-                                      'Sample ${index + 1}: $currentResult',
-                                      style: resultValueStyle.copyWith(color: resultColor, fontWeight: fontWeight),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ],
-                          ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      ElevatedButton.icon(
+                        onPressed: _calculate,
+                        icon: const Icon(Icons.calculate),
+                        label: const Text('Calculate'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: theme.primaryColor,
+                          foregroundColor: theme.colorScheme.onPrimary,
+                          minimumSize: const Size(120, 45),
                         ),
-                      )
-                    : const SizedBox.shrink(),
-              ),
-              const SizedBox(height: 20),
-              Center(
-                child: ElevatedButton.icon(
-                  onPressed: _navigateToNextPage,
-                  icon: const Icon(Icons.arrow_forward),
-                  label: const Text('Next Page'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blueAccent,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(160, 45),
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      ),
+                      const SizedBox(width: 10),
+                      ElevatedButton.icon(
+                        onPressed: _resetFields,
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Reset'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey[400],
+                          minimumSize: const Size(120, 45),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      if (_controllers.length < _maxRows)
+                        ElevatedButton.icon(
+                          onPressed: _addRow,
+                          icon: const Icon(Icons.add),
+                          label: const Text('Add Sample'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blueGrey.shade300,
+                            minimumSize: const Size(120, 45),
+                          ),
+                        )
+                      else
+                        const SizedBox(width: 120, height: 45),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  AnimatedOpacity(
+                    opacity: _showResultsSection ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 300),
+                    child: _showResultsSection
+                        ? Card(
+                            elevation: 2.0,
+                            color: Colors.blue[50],
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Results:', style: boldStyle.copyWith(fontSize: 18)),
+                                  const SizedBox(height: 5),
+                                  Text(
+                                    'Specification: Max ${_specification.toStringAsFixed(0)}%',
+                                    style: specStyle,
+                                  ),
+                                  const Divider(height: 20, thickness: 1),
+                                  ListView.builder(
+                                    shrinkWrap: true,
+                                    physics: const NeverScrollableScrollPhysics(),
+                                    itemCount: _rowResults.length,
+                                    itemBuilder: (context, index) {
+                                      final String currentResult = _rowResults[index];
+                                      if (currentResult.isEmpty && _controllers[index][0].text.isEmpty && _controllers[index][1].text.isEmpty) {
+                                        return const SizedBox.shrink();
+                                      }
+                                      if (currentResult.isEmpty) {
+                                          return Padding(
+                                            padding: const EdgeInsets.symmetric(vertical: 4.0),
+                                            child: Text(
+                                            'Sample ${index + 1}: Processing...',
+                                            style: TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+                                            ),
+                                          );
+                                      }
+                                      return _buildResultRow(
+                                        context: context,
+                                        index: index,
+                                        result: currentResult,
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                  const SizedBox(height: 20),
+                  Center(
+                    child: ElevatedButton.icon(
+                      onPressed: _navigateToNextPage,
+                      icon: const Icon(Icons.arrow_forward),
+                      label: const Text('Next Page'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blueAccent,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(160, 45),
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
               ),
-              const SizedBox(height: 20),
-            ],
+            ),
           ),
         ),
       ),

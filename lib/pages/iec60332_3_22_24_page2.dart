@@ -402,16 +402,15 @@ class IEC60332Page2State extends State<IEC60332Page2> {
     pdf.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
-        // --- MODIFIED: Header now includes the logo ---
         header: (context) => pw.Header(
           child: pw.Row(
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
             children: [
               pw.SizedBox(
-                height: 120, // Changed size
-                width: 120,  // Changed size
+                height: 120, 
+                width: 120,  
                 child: pw.Opacity(
-                  opacity: 0.5, // Added for 50% opacity
+                  opacity: 0.5, 
                   child: pw.Image(logoImage),
                 ),
               ),
@@ -462,7 +461,7 @@ class IEC60332Page2State extends State<IEC60332Page2> {
         ..download = 'iec_report.pdf';
       html.document.body?.append(anchor);
       anchor.click();
-      anchor.remove(); // Use remove() on the element itself
+      anchor.remove(); 
       html.Url.revokeObjectUrl(url);
 
       if (!mounted) return;
@@ -496,7 +495,6 @@ class IEC60332Page2State extends State<IEC60332Page2> {
       return pw.Text("No data calculated for Part 1.");
     }
 
-    // --- FIXED: Replaced deprecated Table.fromTextArray ---
     return pw.TableHelper.fromTextArray(
       headers: headers,
       data: data,
@@ -531,7 +529,6 @@ class IEC60332Page2State extends State<IEC60332Page2> {
       return pw.Text("No data calculated for Part 2.");
     }
 
-    // --- FIXED: Replaced deprecated Table.fromTextArray ---
     return pw.TableHelper.fromTextArray(
       headers: headers,
       data: data,

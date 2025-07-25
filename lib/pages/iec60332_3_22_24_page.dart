@@ -4,22 +4,30 @@ import 'iec60332_3_22_24_page2.dart'; // Import the next page
 // Enum for IEC Test Types
 enum IECTestType { iEC60332_3_22, iEC60332_3_24 }
 
-// Helper class to hold controllers for each material's inputs
+// --- MODIFIED: Helper class to hold controllers for each material's inputs ---
 class IECSampleControllers {
-  String? selectedMaterialKey; // To store the key of the selected material (e.g., "PVC")
-  final TextEditingController weightController; // For weight input
+  String? selectedMaterialKey; 
+  final TextEditingController weightController;
+  // --- NEW: Controller for custom density and state for dropdown ---
+  final TextEditingController customDensityController;
+  String? densitySelection; // Can be 'default' or 'custom'
 
   IECSampleControllers()
       : weightController = TextEditingController(),
-        selectedMaterialKey = null; // Initialize with no material selected
+        customDensityController = TextEditingController(),
+        selectedMaterialKey = null,
+        densitySelection = null;
 
   void dispose() {
     weightController.dispose();
+    customDensityController.dispose();
   }
 
   void clear() {
-    selectedMaterialKey = null; // Reset selected material
+    selectedMaterialKey = null;
     weightController.clear();
+    customDensityController.clear();
+    densitySelection = null;
   }
 }
 
@@ -225,20 +233,16 @@ class IEC60332PageState extends State<IEC60332Page> {
   }
 
 void _navigateToNextPage() {
-    // A calculation is considered valid if the results tab is shown 
-    // and there is at least one actual result object (not null or "SKIPPED").
     final bool hasValidResults = _showResultTab && 
                                  _calculatedResults.any((r) => r is IEC22Results || r is IEC24Results);
 
-    // If the calculation is not valid, show an error and stop.
     if (!hasValidResults) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please perform a valid calculation on this page first.')),
       );
-      return; // This stops the navigation.
+      return;
     }
 
-    // If the check passes, proceed to the next page.
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -258,14 +262,13 @@ void _navigateToNextPage() {
     List<_InitialCalculationResult?> initialResults = [];
     double initialTotalVolumeLM = 0.0;
 
-    // --- PASS 1: Calculate initial volumes and total volume ---
     for (int i = 0; i < _sampleControllers.length; i++) {
       final controllers = _sampleControllers[i];
       final String? materialKey = controllers.selectedMaterialKey;
       final String weightText = controllers.weightController.text;
 
       if (materialKey == null && weightText.isEmpty) {
-        initialResults.add(null); // Placeholder for skipped/empty rows
+        initialResults.add(null);
         continue;
       }
 
@@ -277,7 +280,18 @@ void _navigateToNextPage() {
         continue;
       }
       
-      double? density = _materialDensityData[materialKey];
+      double? density;
+      if (controllers.densitySelection == 'custom') {
+        density = double.tryParse(controllers.customDensityController.text);
+        if (density == null || density <= 0) {
+          firstErrorMsg ??= 'Invalid custom density for Entry ${i+1}.';
+          initialResults.add(null);
+          continue;
+        }
+      } else {
+        density = _materialDensityData[materialKey];
+      }
+
       if (density == null || density <= 0) {
         firstErrorMsg ??= 'Invalid density for $materialKey (Entry ${i+1}).';
         initialResults.add(null);
@@ -294,7 +308,6 @@ void _navigateToNextPage() {
       ));
     }
 
-    // --- PASS 2: Adjust values based on percentage of initial total ---
     List<dynamic> finalResults = List.filled(_sampleControllers.length, null, growable: true);
     double finalTotalVolumeLM = 0.0;
 
@@ -302,11 +315,10 @@ void _navigateToNextPage() {
       final initialData = initialResults[i];
 
       if (initialData == null) {
-          // If the original entry was skipped or invalid, reflect that.
-          if (_sampleControllers[i].selectedMaterialKey == null && _sampleControllers[i].weightController.text.isEmpty) {
-             if (_sampleControllers.length > 1) finalResults[i] = "SKIPPED";
-          }
-          continue;
+        if (_sampleControllers[i].selectedMaterialKey == null && _sampleControllers[i].weightController.text.isEmpty) {
+           if (_sampleControllers.length > 1) finalResults[i] = "SKIPPED";
+        }
+        continue;
       }
 
       double percentage = 0;
@@ -320,11 +332,11 @@ void _navigateToNextPage() {
 
       if (percentage < 5.0) {
         isAdjusted = true;
-        finalDensity = 1.0; // Change density to 1
-        finalVolumeLM = (initialData.weight / finalDensity) / 1000; // Recalculate volume
+        finalDensity = 1.0;
+        finalVolumeLM = (initialData.weight / finalDensity) / 1000;
       }
 
-      finalTotalVolumeLM += finalVolumeLM; // Add the final (possibly adjusted) volume to the new total
+      finalTotalVolumeLM += finalVolumeLM;
 
       double individualTestPieces = (_selectedIECType == IECTestType.iEC60332_3_22) ? 7.0 : 1.5;
 
@@ -332,11 +344,11 @@ void _navigateToNextPage() {
         finalResults[i] = IEC22Results(
           material: initialData.materialKey,
           weight: '${initialData.weight.toStringAsFixed(2)} g',
-          density: '${finalDensity.toStringAsFixed(2)} g/cm³', // Use final density
-          volume: '${finalVolumeLM.toStringAsFixed(4)} l/m',   // Use final volume
-          rawVolumeLM: finalVolumeLM, // Store final raw volume
+          density: '${finalDensity.toStringAsFixed(2)} g/cm³',
+          volume: '${finalVolumeLM.toStringAsFixed(4)} l/m',
+          rawVolumeLM: finalVolumeLM,
           totalTestPieces: individualTestPieces,
-          isAdjusted: isAdjusted, // Pass the flag
+          isAdjusted: isAdjusted,
         );
       } else {
         finalResults[i] = IEC24Results(
@@ -351,10 +363,9 @@ void _navigateToNextPage() {
       }
     }
 
-    // --- Final state update ---
     setState(() {
       _calculatedResults = finalResults;
-      _rawTotalVolumeLM = finalTotalVolumeLM; // Use the final, adjusted total
+      _rawTotalVolumeLM = finalTotalVolumeLM;
       
       if (firstErrorMsg != null) {
         _calculationError = firstErrorMsg;
@@ -402,30 +413,26 @@ void _navigateToNextPage() {
   Widget _buildTextField({
     required String label,
     required TextEditingController controller,
-    double? fieldWidth,
   }) {
-    return SizedBox(
-      width: fieldWidth ?? MediaQuery.of(context).size.width * 0.35,
-      child: TextField(
-        controller: controller,
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        style: const TextStyle(fontSize: 14.0),
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: const TextStyle(fontSize: 14.0),
-          border: const OutlineInputBorder(),
-          isDense: true,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        ),
-        onChanged: (value) => setState(() {
-            _showResultTab = false;
-            _calculationError = null;
-            _totalVolumeDisplay = ""; 
-            _rawTotalVolumeLM = 0.0;
-            _testPiecesPerTotalVolumeDisplay = "";
-            _calculatedTestPiecesPage2 = 0.0;
-        }),
+    return TextField(
+      controller: controller,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      style: const TextStyle(fontSize: 14.0),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(fontSize: 14.0),
+        border: const OutlineInputBorder(),
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       ),
+      onChanged: (value) => setState(() {
+          _showResultTab = false;
+          _calculationError = null;
+          _totalVolumeDisplay = ""; 
+          _rawTotalVolumeLM = 0.0;
+          _testPiecesPerTotalVolumeDisplay = "";
+          _calculatedTestPiecesPage2 = 0.0;
+      }),
     );
   }
 
@@ -433,62 +440,120 @@ void _navigateToNextPage() {
     final controllers = _sampleControllers[index];
     final String materialFieldLabel = 'Material ${index + 1}';
     const String weightFieldLabel = 'Weight (g)';
+    final double? defaultDensity = controllers.selectedMaterialKey != null
+        ? _materialDensityData[controllers.selectedMaterialKey!]
+        : null;
 
     return Padding( 
       padding: const EdgeInsets.symmetric(vertical: 12.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center, 
+      child: Column(
         children: [
-          Expanded( 
-            flex: 2, 
-            child: DropdownButtonFormField<String>(
-              decoration: InputDecoration(
-                labelText: materialFieldLabel,
-                labelStyle: const TextStyle(fontSize: 14.0),
-                border: const OutlineInputBorder(),
-                isDense: true,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center, 
+            children: [
+              Expanded( 
+                flex: 3, 
+                child: DropdownButtonFormField<String>(
+                  decoration: InputDecoration(
+                    labelText: materialFieldLabel,
+                    labelStyle: const TextStyle(fontSize: 14.0),
+                    border: const OutlineInputBorder(),
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                  ),
+                  value: controllers.selectedMaterialKey,
+                  items: _materialDensityData.keys.map((String key) {
+                    return DropdownMenuItem<String>(
+                      value: key,
+                      child: Text(key, style: const TextStyle(fontSize: 14.0), overflow: TextOverflow.ellipsis),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      controllers.selectedMaterialKey = newValue;
+                      controllers.densitySelection = 'default';
+                      controllers.customDensityController.clear();
+                      _showResultTab = false;
+                      _calculationError = null;
+                    });
+                  },
+                  isExpanded: true, 
+                ),
               ),
-              value: controllers.selectedMaterialKey,
-              items: _materialDensityData.keys.map((String key) {
-                return DropdownMenuItem<String>(
-                  value: key,
-                  child: Text(key, style: const TextStyle(fontSize: 14.0), overflow: TextOverflow.ellipsis),
-                );
-              }).toList(),
-              onChanged: (String? newValue) {
-                setState(() {
-                  controllers.selectedMaterialKey = newValue;
-                  _showResultTab = false;
-                  _calculationError = null;
-                  _totalVolumeDisplay = ""; 
-                  _rawTotalVolumeLM = 0.0;
-                  _testPiecesPerTotalVolumeDisplay = "";
-                  _calculatedTestPiecesPage2 = 0.0;
-                });
-              },
-              isExpanded: true, 
-            ),
+              const SizedBox(width: 10.0), 
+              Expanded( 
+                flex: 2, 
+                child: _buildTextField(
+                  label: weightFieldLabel, 
+                  controller: controllers.weightController,
+                ),
+              ),
+              if (_sampleControllers.length > 1)
+                IconButton(
+                  icon: Icon(Icons.remove_circle_outline, color: Colors.red.shade700),
+                  tooltip: 'Remove Material ${index + 1}', 
+                  padding: const EdgeInsets.only(left: 8.0), 
+                  constraints: const BoxConstraints(),
+                  onPressed: () => _removeMaterial(index),
+                )
+              else 
+                const SizedBox(width: 48), 
+            ],
           ),
-          const SizedBox(width: 10.0), 
-          Expanded( 
-            flex: 2, 
-            child: _buildTextField(
-              label: weightFieldLabel, 
-              controller: controllers.weightController,
-              fieldWidth: null, 
-            ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                flex: 3,
+                child: DropdownButtonFormField<String>(
+                  decoration: const InputDecoration(
+                    labelText: 'Density (g/cm³)',
+                    labelStyle: TextStyle(fontSize: 14.0),
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                  ),
+                  hint: Text(
+                    'Select material first',
+                    style: TextStyle(fontSize: 14.0, color: Colors.grey.shade600),
+                  ),
+                  value: controllers.selectedMaterialKey == null ? null : controllers.densitySelection,
+                  items: [
+                    if (defaultDensity != null)
+                      DropdownMenuItem<String>(
+                        value: 'default',
+                        child: Text(defaultDensity.toString(), style: const TextStyle(fontSize: 14.0)),
+                      ),
+                    const DropdownMenuItem<String>(
+                      value: 'custom',
+                      child: Text('Custom', style: TextStyle(fontSize: 14.0)),
+                    ),
+                  ],
+                  onChanged: controllers.selectedMaterialKey == null ? null : (String? newValue) {
+                    setState(() {
+                      controllers.densitySelection = newValue;
+                      if (newValue != 'custom') {
+                        controllers.customDensityController.clear();
+                      }
+                      _showResultTab = false;
+                      _calculationError = null;
+                    });
+                  },
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                flex: 2,
+                child: controllers.densitySelection == 'custom'
+                  ? _buildTextField(
+                      label: 'Custom Density (g/cm³)',
+                      controller: controllers.customDensityController,
+                    )
+                  : const SizedBox.shrink(),
+              ),
+              const SizedBox(width: 48),
+            ],
           ),
-          if (_sampleControllers.length > 1)
-            IconButton(
-              icon: Icon(Icons.remove_circle_outline, color: Colors.red.shade700),
-              tooltip: 'Remove Material ${index + 1}', 
-              padding: const EdgeInsets.only(left: 8.0), 
-              constraints: const BoxConstraints(),
-              onPressed: () => _removeMaterial(index),
-            )
-          else 
-            const SizedBox(width: 48), 
         ],
       ),
     );
@@ -508,255 +573,256 @@ void _navigateToNextPage() {
         child: SingleChildScrollView(
           controller: _scrollController,
           child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start, 
-              crossAxisAlignment: CrossAxisAlignment.center, 
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 10.0),
-                  child: DropdownButtonFormField<IECTestType>(
-                    decoration: const InputDecoration(
-                      labelText: 'Select IEC Test Category:',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 500),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start, 
+                crossAxisAlignment: CrossAxisAlignment.center, 
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10.0),
+                    child: DropdownButtonFormField<IECTestType>(
+                      decoration: const InputDecoration(
+                        labelText: 'Select IEC Test Category:',
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                      ),
+                      value: _selectedIECType,
+                      items: IECTestType.values.map((IECTestType type) {
+                        String typeName = type.toString().split('.').last;
+                        if (type == IECTestType.iEC60332_3_22) typeName = "Category A (IEC 60332-3-22)";
+                        if (type == IECTestType.iEC60332_3_24) typeName = "Category C (IEC 60332-3-24)";
+                        return DropdownMenuItem<IECTestType>(
+                          value: type,
+                          child: Text(typeName),
+                        );
+                      }).toList(),
+                      onChanged: _onTestTypeChanged,
                     ),
-                    value: _selectedIECType,
-                    items: IECTestType.values.map((IECTestType type) {
-                      String typeName = type.toString().split('.').last;
-                      if (type == IECTestType.iEC60332_3_22) typeName = "Category A (IEC 60332-3-22)";
-                      if (type == IECTestType.iEC60332_3_24) typeName = "Category C (IEC 60332-3-24)";
-                      return DropdownMenuItem<IECTestType>(
-                        value: type,
-                        child: Text(typeName),
-                      );
-                    }).toList(),
-                    onChanged: _onTestTypeChanged,
                   ),
-                ),
-                
-                Card(
-                  margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
-                  elevation: 1.0,
-                  color: const Color(0xFFFFEBEB), 
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: _sampleControllers.length,
-                      itemBuilder: (context, index) {
-                        return _buildMaterialInputRow(index); 
-                      },
-                    ),
-                  )
-                ),
-                const SizedBox(height: 20),
+                  
+                  Card(
+                    margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+                    elevation: 1.0,
+                    color: const Color(0xFFFFEBEB), 
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _sampleControllers.length,
+                        itemBuilder: (context, index) {
+                          return _buildMaterialInputRow(index); 
+                        },
+                      ),
+                    )
+                  ),
+                  const SizedBox(height: 20),
 
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    ElevatedButton.icon(
-                        onPressed: _performCalculations,
-                        icon: const Icon(Icons.calculate), 
-                        label: const Text('Calculate'), 
-                        style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(context).primaryColor,
-                            foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                            minimumSize: const Size(110, 45))), 
-                    const SizedBox(width: 8),
-                    ElevatedButton.icon(
-                        onPressed: () => _resetFields(resetType: true), 
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Reset'),
-                        style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.grey[400],
-                            minimumSize: const Size(90, 45))),
-                  ],
-                ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ElevatedButton.icon(
+                          onPressed: _performCalculations,
+                          icon: const Icon(Icons.calculate), 
+                          label: const Text('Calculate'), 
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: Theme.of(context).primaryColor,
+                              foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                              minimumSize: const Size(110, 45))), 
+                      const SizedBox(width: 8),
+                      ElevatedButton.icon(
+                          onPressed: () => _resetFields(resetType: true), 
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Reset'),
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.grey[400],
+                              minimumSize: const Size(90, 45))),
+                    ],
+                  ),
 
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const SizedBox(height: 80), 
-                     ElevatedButton.icon(
-                        onPressed: _addMaterial, 
-                        icon: const Icon(Icons.add),
-                        label: const Text('Add Material'), 
-                        style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blueGrey.shade300,
-                            minimumSize: const Size(140, 45))), 
-                    
-                    const SizedBox(width: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const SizedBox(height: 80), 
+                       ElevatedButton.icon(
+                          onPressed: _addMaterial, 
+                          icon: const Icon(Icons.add),
+                          label: const Text('Add Material'), 
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blueGrey.shade300,
+                              minimumSize: const Size(140, 45))), 
+                      
+                      const SizedBox(width: 8),
 
-                     ElevatedButton.icon(
-                        onPressed: _navigateToNextPage,
-                        icon: const Icon(Icons.arrow_forward),
-                        label: const Text('Next Page'),
-                        style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green, 
-                            foregroundColor: Colors.white,
-                            minimumSize: const Size(140, 45),
-                        ),
-                        ),
-                  ],
-                ),
-                const SizedBox(height: 30),
-
-                AnimatedOpacity(
-                  opacity: _showResultTab ? 1.0 : 0.0,
-                  duration: const Duration(milliseconds: 300),
-                  child: _showResultTab
-                      ? Container(
-                          constraints: const BoxConstraints(maxWidth: 380),
-                          padding: const EdgeInsets.all(16.0),
-                          decoration: BoxDecoration(
-                            color: _calculationError != null && !(_calculatedResults.any((r) => r is IEC22Results || r is IEC24Results))
-                                ? Colors.red[50]
-                                : Colors.blue[50],
-                            borderRadius: BorderRadius.circular(8.0),
-                            border: Border.all(
-                                color: _calculationError != null && !(_calculatedResults.any((r) => r is IEC22Results || r is IEC24Results))
-                                    ? Colors.red.shade300
-                                    : Colors.blue.shade200),
+                       ElevatedButton.icon(
+                          onPressed: _navigateToNextPage,
+                          icon: const Icon(Icons.arrow_forward),
+                          label: const Text('Next Page'),
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green, 
+                              foregroundColor: Colors.white,
+                              minimumSize: const Size(140, 45),
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (_calculationError != null && !(_calculatedResults.any((r) => r is IEC22Results || r is IEC24Results)))
-                                Text(_calculationError!, style: errorStyle)
-                              else ...[
-                                Text( 
-                                  _selectedIECType == IECTestType.iEC60332_3_22 
-                                      ? 'Results (IEC 60332-3-22):' 
-                                      : 'Results (IEC 60332-3-24):',
-                                  style: boldStyle
-                                ),
-                                if (_calculationError != null)
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 5.0, bottom: 8.0),
-                                    child: Text(_calculationError!, style: errorStyle.copyWith(fontSize: 14)),
+                          ),
+                    ],
+                  ),
+                  const SizedBox(height: 30),
+
+                  AnimatedOpacity(
+                    opacity: _showResultTab ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 300),
+                    child: _showResultTab
+                        ? Container(
+                            constraints: const BoxConstraints(maxWidth: 380),
+                            padding: const EdgeInsets.all(16.0),
+                            decoration: BoxDecoration(
+                              color: _calculationError != null && !(_calculatedResults.any((r) => r is IEC22Results || r is IEC24Results))
+                                  ? Colors.red[50]
+                                  : Colors.blue[50],
+                              borderRadius: BorderRadius.circular(8.0),
+                              border: Border.all(
+                                  color: _calculationError != null && !(_calculatedResults.any((r) => r is IEC22Results || r is IEC24Results))
+                                      ? Colors.red.shade300
+                                      : Colors.blue.shade200),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (_calculationError != null && !(_calculatedResults.any((r) => r is IEC22Results || r is IEC24Results)))
+                                  Text(_calculationError!, style: errorStyle)
+                                else ...[
+                                  Text( 
+                                    _selectedIECType == IECTestType.iEC60332_3_22 
+                                        ? 'Results (IEC 60332-3-22):' 
+                                        : 'Results (IEC 60332-3-24):',
+                                    style: boldStyle
                                   ),
-                                ListView.builder( 
-                                  shrinkWrap: true,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  itemCount: _calculatedResults.length,
-                                  itemBuilder: (context, index) {
-                                    final result = _calculatedResults[index];
-                                    if (result == "SKIPPED") {
-                                      return Padding(
-                                        padding: const EdgeInsets.symmetric(vertical: 3.0),
-                                        child: Text('Material ${index + 1}: Skipped', style: normalStyle.copyWith(fontStyle: FontStyle.italic, color: Colors.grey[700])),
-                                      );
-                                    }
-                                    
-                                    String materialRes = "", weightRes = "", densityRes = "", volumeDisplayStr = "";
-                                    double individualRawVolume = 0.0;
-                                    bool isAdjusted = false; // Flag to check if density was adjusted
+                                  if (_calculationError != null)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 5.0, bottom: 8.0),
+                                      child: Text(_calculationError!, style: errorStyle.copyWith(fontSize: 14)),
+                                    ),
+                                  ListView.builder( 
+                                    shrinkWrap: true,
+                                    physics: const NeverScrollableScrollPhysics(),
+                                    itemCount: _calculatedResults.length,
+                                    itemBuilder: (context, index) {
+                                      final result = _calculatedResults[index];
+                                      if (result == "SKIPPED") {
+                                        return Padding(
+                                          padding: const EdgeInsets.symmetric(vertical: 3.0),
+                                          child: Text('Material ${index + 1}: Skipped', style: normalStyle.copyWith(fontStyle: FontStyle.italic, color: Colors.grey[700])),
+                                        );
+                                      }
+                                      
+                                      String materialRes = "", weightRes = "", densityRes = "", volumeDisplayStr = "";
+                                      double individualRawVolume = 0.0;
+                                      bool isAdjusted = false;
 
-                                    if (result is IEC22Results) { 
-                                        materialRes = result.material;
-                                        weightRes = result.weight;
-                                        densityRes = result.density;
-                                        volumeDisplayStr = result.volume;
-                                        individualRawVolume = result.rawVolumeLM;
-                                        isAdjusted = result.isAdjusted;
-                                    } else if (result is IEC24Results) { 
-                                        materialRes = result.material;
-                                        weightRes = result.weight;
-                                        densityRes = result.density;
-                                        volumeDisplayStr = result.volume;
-                                        individualRawVolume = result.rawVolumeLM;
-                                        isAdjusted = result.isAdjusted;
-                                    }
-
-                                    if (materialRes.isNotEmpty) { 
-                                      String percentageText = "";
-                                      if (_rawTotalVolumeLM > 1e-9 && individualRawVolume > 0) { 
-                                        double percentage = (individualRawVolume / _rawTotalVolumeLM) * 100;
-                                        percentageText = " (${percentage.toStringAsFixed(2)}%)"; 
+                                      if (result is IEC22Results) { 
+                                          materialRes = result.material;
+                                          weightRes = result.weight;
+                                          densityRes = result.density;
+                                          volumeDisplayStr = result.volume;
+                                          individualRawVolume = result.rawVolumeLM;
+                                          isAdjusted = result.isAdjusted;
+                                      } else if (result is IEC24Results) { 
+                                          materialRes = result.material;
+                                          weightRes = result.weight;
+                                          densityRes = result.density;
+                                          volumeDisplayStr = result.volume;
+                                          individualRawVolume = result.rawVolumeLM;
+                                          isAdjusted = result.isAdjusted;
                                       }
 
-                                      return Padding(
-                                        padding: const EdgeInsets.symmetric(vertical: 6.0),
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text('Material ${index + 1}: $materialRes', style: boldStyle.copyWith(fontSize: 15)), 
-                                            Padding(
-                                              padding: const EdgeInsets.only(left: 8.0, top: 2.0),
-                                              child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Text('Weight: $weightRes', style: resultValueStyle),
-                                                  Row( // Use a row to display density and adjustment note
-                                                    children: [
-                                                      Text('Density: $densityRes', style: resultValueStyle),
-                                                      if (isAdjusted)
-                                                        Text(' (Adjusted)', style: resultValueStyle.copyWith(color: Colors.deepOrange, fontStyle: FontStyle.italic)),
-                                                    ],
-                                                  ),
-                                                  Text('Volume: $volumeDisplayStr$percentageText', style: resultValueStyle), 
-                                                ],
-                                              ),
-                                            ),
-                                           if (index < _calculatedResults.length -1 && _calculatedResults.skip(index+1).any((r) => r != null && r != "SKIPPED"))
-                                                const Divider(height: 10, thickness: 0.5),
-                                          ],
-                                        ),
-                                      );
-                                    }
-                                    return const SizedBox.shrink(); 
-                                  },
-                                ),
+                                      if (materialRes.isNotEmpty) { 
+                                        String percentageText = "";
+                                        if (_rawTotalVolumeLM > 1e-9 && individualRawVolume > 0) { 
+                                          double percentage = (individualRawVolume / _rawTotalVolumeLM) * 100;
+                                          percentageText = " (${percentage.toStringAsFixed(2)}%)"; 
+                                        }
 
-                                // Total Volume Display
-                                if (_totalVolumeDisplay.isNotEmpty && _calculationError == null)
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 16.0), 
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start, 
-                                      children: [
-                                        const Divider(height: 10, thickness: 0.8, color: Colors.blueGrey),
-                                        Padding(
-                                          padding: const EdgeInsets.symmetric(vertical: 8.0),
-                                          child: Text( 
-                                            _totalVolumeDisplay,
+                                        return Padding(
+                                          padding: const EdgeInsets.symmetric(vertical: 6.0),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text('Material ${index + 1}: $materialRes', style: boldStyle.copyWith(fontSize: 15)), 
+                                              Padding(
+                                                padding: const EdgeInsets.only(left: 8.0, top: 2.0),
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text('Weight: $weightRes', style: resultValueStyle),
+                                                    Row(
+                                                      children: [
+                                                        Text('Density: $densityRes', style: resultValueStyle),
+                                                        if (isAdjusted)
+                                                          Text(' (Adjusted)', style: resultValueStyle.copyWith(color: Colors.deepOrange, fontStyle: FontStyle.italic)),
+                                                      ],
+                                                    ),
+                                                    Text('Volume: $volumeDisplayStr$percentageText', style: resultValueStyle), 
+                                                  ],
+                                                ),
+                                              ),
+                                             if (index < _calculatedResults.length -1 && _calculatedResults.skip(index+1).any((r) => r != null && r != "SKIPPED"))
+                                                  const Divider(height: 10, thickness: 0.5),
+                                            ],
+                                          ),
+                                        );
+                                      }
+                                      return const SizedBox.shrink(); 
+                                    },
+                                  ),
+
+                                  if (_totalVolumeDisplay.isNotEmpty && _calculationError == null)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 16.0), 
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start, 
+                                        children: [
+                                          const Divider(height: 10, thickness: 0.8, color: Colors.blueGrey),
+                                          Padding(
+                                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                            child: Text( 
+                                              _totalVolumeDisplay,
+                                              style: boldStyle.copyWith(fontSize: 15, color: Theme.of(context).primaryColorDark), 
+                                              textAlign: TextAlign.start, 
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  
+                                  if (_testPiecesPerTotalVolumeDisplay.isNotEmpty && _calculationError == null)
+                                    Padding(
+                                      padding: EdgeInsets.only(
+                                        top: _totalVolumeDisplay.isNotEmpty ? 4.0 : 16.0, 
+                                        bottom: 8.0
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start, 
+                                        children: [
+                                          if (_totalVolumeDisplay.isEmpty && _calculatedResults.any((r) => r != null && r != "SKIPPED"))
+                                            const Divider(height: 10, thickness: 0.8, color: Colors.blueGrey),
+                                          Text( 
+                                            '$_testPiecesPerTotalVolumeDisplay pcs x 3.5m',
                                             style: boldStyle.copyWith(fontSize: 15, color: Theme.of(context).primaryColorDark), 
                                             textAlign: TextAlign.start, 
                                           ),
-                                        ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                
-                                // Test Pieces per Total Volume Display
-                                if (_testPiecesPerTotalVolumeDisplay.isNotEmpty && _calculationError == null)
-                                  Padding(
-                                    padding: EdgeInsets.only(
-                                      top: _totalVolumeDisplay.isNotEmpty ? 4.0 : 16.0, 
-                                      bottom: 8.0
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start, 
-                                      children: [
-                                        if (_totalVolumeDisplay.isEmpty && _calculatedResults.any((r) => r != null && r != "SKIPPED"))
-                                          const Divider(height: 10, thickness: 0.8, color: Colors.blueGrey),
-                                        Text( 
-                                          '$_testPiecesPerTotalVolumeDisplay pcs x 3.5m',
-                                          style: boldStyle.copyWith(fontSize: 15, color: Theme.of(context).primaryColorDark), 
-                                          textAlign: TextAlign.start, 
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                              ] 
-                            ],
-                          ),
-                        )
-                      : const SizedBox.shrink(),
-                ),
-                const SizedBox(height: 20), 
-              ],
+                                ] 
+                              ],
+                            ),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                  const SizedBox(height: 20), 
+                ],
+              ),
             ),
           ),
         ),
